@@ -1,0 +1,20 @@
+1. EXIT immediately at command prompt.
+2. Invalid top-level command (HELLO) then EXIT.
+3. SEARCH when phonebook is empty.
+4. Normal ADD then SEARCH with valid index.
+5. ADD with empty/space-only first name, last name, nickname, dark
+	secret (re-prompts until valid).
+6. ADD with invalid phone (12ab, empty) then valid phone (re-prompts
+	until digits-only).
+7. SEARCH with invalid indices: empty input, 9, a, 00, then valid 0.
+8. Circular overwrite after 9 adds (capacity 8): verified index 0 holds
+	newest overwritten contact (F9).
+9. EOF at command prompt (empty stdin): exits cleanly.
+10. EOF during ADD (truncated input): returns from add and exits cleanly
+	when stdin ends.
+11. Command case/whitespace sensitivity: add and " ADD" rejected as bad
+	input.
+12. Table truncation for long fields (>10 chars): verified VeryLongF. /
+	VeryLongL. / VeryLongN. format.
+13. Index boundary index == count rejected (e.g., only 1 contact, input
+	1 is invalid).
