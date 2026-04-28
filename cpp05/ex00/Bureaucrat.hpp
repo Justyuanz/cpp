@@ -16,26 +16,32 @@ class Bureaucrat
 	Bureaucrat(const Bureaucrat &other);
 	Bureaucrat &operator=(const Bureaucrat &other);
 	~Bureaucrat();
-	
+
 	// getters
-	int					getGrade() const; 
+	int					getGrade() const;
 	const std::string	&getName() const;
-	
+
 	// actions
 	void incrementGrade();
 	void decrementGrade();
-	
+
 	//exceptions,nested inside Bureaucrat — they belong to Bureaucrat, not standalone classes.
 	class GradeTooHighException: public std::exception
 	{
+		private:
+		std::string	_msg;
 		public:
-		const char *what() const noexcept;
+		GradeTooHighException(const std::string &message);
+		const char* what() const noexcept
+		{
+			return "GradeTooHigh";
+		}
 	};
 
-	class GradeTooLowException: public std::exception
+	class GradeTooLowException : public std::exception
 	{
 		public:
-		const char *what() const noexcept;
+		const char* what() const noexcept;
 	};
 };
 

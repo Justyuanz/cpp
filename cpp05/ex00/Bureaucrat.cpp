@@ -60,13 +60,3 @@ std::ostream &operator<<(std::ostream &out, const Bureaucrat &b)
 	out << b.getName() << ", bureaucrat grade " << b.getGrade();
 	return (out);
 }
-
-const char *Bureaucrat::GradeTooHighException::what() const noexcept
-{
-	return ("Grade is too high (must be between 1 and 150)");
-}
-
-const char *Bureaucrat::GradeTooLowException::what() const noexcept
-{
-	return ("Grade is too low (must be between 1 and 150)");
-}
