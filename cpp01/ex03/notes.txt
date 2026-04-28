@@ -1,0 +1,39 @@
+Weapon
+├── _type (private string)
+├── getType() → const string&
+└── setType(string)
+
+HumanA
+├── _name (string)
+├── _weapon (Weapon&)        ← reference, always armed
+├── HumanA(string, Weapon&)  ← weapon given at construction
+└── attack()
+
+HumanB
+├── _name (string)
+├── _weapon (Weapon*)        ← pointer, may be NULL
+├── HumanB(string)           ← no weapon at construction
+├── setWeapon(Weapon&)       ← assigned later
+└── attack()                 ← must check if _weapon is NULL
+
+
+Simple rules:
+Copy — when you want your own independent version:
+cppstd::string _name;   // you want bob's name to be bob's own string
+                     // changing original name elsewhere won't affect bob
+Reference — when you always have the object and want to see live changes:
+cppWeapon &_weapon;     // bob always has a weapon from construction
+                     // you want bob to see changes to the original weapon
+                     // cannot be null, cannot be rebound
+Pointer — when the object is optional or set later:
+cppWeapon *_weapon;     // jim may not have a weapon yet (nullptr)
+                     // weapon can be given later via setWeapon()
+                     // can be null, can be rebound
+
+Real world thinking:
+QuestionAnswerDo I need my own independent value?copyWill it always exist and never change what it points to?referenceCan it be absent, or set later?pointer
+
+
+
+
+

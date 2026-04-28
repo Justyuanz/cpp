@@ -1,0 +1,34 @@
+void (*f)(void)
+//    ^
+//    f is a pointer to a function
+
+void (Harl::*f)(void)
+//        ^
+//        f is a pointer to a function that belongs to Harl
+
+void (Harl::*f)(void)     // one pointer
+void (Harl::*f[4])(void)  // array of 4 pointers
+//              ^
+//              just added [4] here, same as int x vs int x[4]
+
+f[i]          // the function pointer
+this          // the current Harl object
+this->*f[i]   // "call this function on this object"
+(this->*f[i]) // wrap in () because of C++ parsing rules
+(this->*f[i])() // () at end = actually call it
+
+(*f)()          // regular function pointer call
+(this->*f[i])() // member function pointer call, needs an object
+
+Each slot holds the address of one function:
+f[0] = &Harl::debug    // f[0] points to debug function (address)
+f[1] = &Harl::info     // f[1] points to info function
+f[2] = &Harl::warning  // f[2] points to warning function
+f[3] = &Harl::error    // f[3] points to error function
+
+& in a declaration (left side) = reference
+& on a value (right side) = take address of
+
+// C++ secretly passes the object as a hidden parameter
+// it's as if it was written like this:
+void Harl_complain(Harl *this, std::string level)
