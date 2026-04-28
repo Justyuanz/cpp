@@ -1,0 +1,203 @@
+================================================================================
+CPP05 - EXCEPTIONS AND ERROR HANDLING - CLEAR NOTES
+================================================================================
+
+
+--------------------------------------------------------------------------------
+1. WHAT IS AN EXCEPTION?
+--------------------------------------------------------------------------------
+
+An exception is C++'s way of saying "something went wrong, stop everything."
+
+In C you returned error codes and hoped the caller checked them.
+In C++ you THROW an exception and FORCE the caller to handle it.
+
+Three keywords:
+    try    - attempt something that might fail
+    throw  - something failed, stop and report the error
+    catch  - handle the failure
+
+Flow:
+    1. try block runs
+    2. throw happens somewhere inside
+    3. everything after the throw is skipped
+    4. matching catch block runs
+    5. program continues after the catch
+
+
+--------------------------------------------------------------------------------
+2. std::exception - THE BASE CLASS FOR ALL ERRORS
+--------------------------------------------------------------------------------
+
+C++ has a built-in base class for all exceptions called std::exception.
+It lives in <exception> header.
+
+It has one important function:
+    what() - returns a message describing what went wrong
+
+Every error class in C++ inherits from std::exception.
+You inherit from it too when making your own exceptions.
+
+The what() signature always looks like this:
+    const char *what() const noexcept
+
+    const char * = C-style string (same as "hello" in C)
+    noexcept     = promise that this function will never throw
+
+
+--------------------------------------------------------------------------------
+3. MAKING YOUR OWN EXCEPTION CLASS
+--------------------------------------------------------------------------------
+
+Inherit from std::exception and override what():
+    - declare what() in the class
+    - define it in the .cpp with your error message
+    - that is literally all you need
+
+The class has no members, no constructor, no data.
+Just one function returning a message string.
+
+When to make your own exception:
+    - you need a specific, named error type
+    - you want a custom error message
+    - you want to catch this specific error separately from others
+
+
+--------------------------------------------------------------------------------
+4. NESTED EXCEPTION CLASSES
+--------------------------------------------------------------------------------
+
+Exception classes can live INSIDE another class.
+This means they belong to that class and only make sense in its context.
+
+Why nest:
+    - GradeTooHighException only exists because of Bureaucrat's grade system
+    - it has no meaning outside Bureaucrat
+    - nesting keeps related things together
+
+Accessing nested classes from outside:
+    - use the outer class name + :: to reach them
+    - Bureaucrat::GradeTooHighException
+    - same reason you write std::string (string lives inside std)
+
+Defining methods of nested classes in .cpp:
+    - need TWO levels of scope: OuterClass::InnerClass::method()
+    - Bureaucrat::GradeTooHighException::what()
+
+This is NOT inheritance. Nesting = belongs to. Inheritance = is a.
+GradeTooHighException IS A std::exception (inheritance)
+GradeTooHighException BELONGS TO Bureaucrat (nesting)
+
+
+--------------------------------------------------------------------------------
+5. THROW - HOW TO SIGNAL AN ERROR
+--------------------------------------------------------------------------------
+
+throw stops the current function immediately and sends the error upward.
+Everything after the throw in that function is skipped.
+
+throw creates an instance of your exception class:
+    throw GradeTooHighException();
+    //                         ^
+    //                         () = creating an object of that class
+
+Where to throw:
+    - in constructors when invalid arguments are passed
+    - in functions when an operation would violate rules
+    - anywhere something goes wrong that the caller must handle
+
+
+--------------------------------------------------------------------------------
+6. TRY/CATCH - HOW TO HANDLE ERRORS
+--------------------------------------------------------------------------------
+
+try wraps code that might throw.
+catch handles specific exception types.
+
+You can have multiple catch blocks for different exception types.
+C++ checks them in order and runs the FIRST matching one.
+
+When throw happens inside try:
+    - all remaining code in try is SKIPPED
+    - C++ finds the matching catch
+    - catch block runs
+    - program continues after the catch block normally
+
+IMPORTANT: if two operations are independent and you want both tested,
+use separate try/catch blocks for each.
+One try/catch stops at the first throw.
+
+
+--------------------------------------------------------------------------------
+7. CATCH PARAMETER - WHERE DOES &e COME FROM?
+--------------------------------------------------------------------------------
+
+catch(SomeException &e) looks like a function parameter because it IS one.
+
+When throw SomeException() happens:
+    - C++ catches that object
+    - gives it to you as the parameter you named (e, error, ex, whatever)
+    - you use it inside the catch block
+
+Why you must write the full type in catch:
+    - e does not exist yet, you are declaring it brand new
+    - compiler needs the full type to know what to catch
+    - same reason you write Bureaucrat b - must say the type for new variables
+
+Why & (reference):
+    - same reason as always - avoid copying the exception object
+    - also preserves the actual type for polymorphism
+
+
+--------------------------------------------------------------------------------
+8. CATCH ORDER MATTERS
+--------------------------------------------------------------------------------
+
+C++ checks catch blocks from top to bottom and runs the FIRST match.
+
+Always put specific exceptions BEFORE general ones:
+    catch(Bureaucrat::GradeTooHighException &e)  // specific first
+    catch(Bureaucrat::GradeTooLowException &e)   // specific second
+    catch(std::exception &e)                     // general last (catches everything)
+
+If you put std::exception first, it catches everything and the
+specific catches below it never run.
+
+
+--------------------------------------------------------------------------------
+9. CONST MEMBER + CONSTRUCTOR RULE (REMINDER)
+--------------------------------------------------------------------------------
+
+If a member is const, it cannot be set after construction.
+It MUST be set in the initializer list.
+
+This means:
+    - a default constructor makes no sense for classes with const members
+    - always use a value constructor (with parameters) instead
+    - the const member is locked forever after the initializer list runs
+
+Initializer list order must match declaration order in the header.
+C++ initializes members in declaration order regardless of initializer list order.
+The compiler will warn (and with -Werror, error) if they do not match.
+
+
+--------------------------------------------------------------------------------
+10. QUICK REFERENCE
+--------------------------------------------------------------------------------
+
+    Concept                  | Key point
+    -------------------------|--------------------------------------------------
+    throw                    | stops function, sends error upward
+    try                      | wraps code that might throw
+    catch                    | handles specific exception type
+    std::exception           | base class for all exceptions, has what()
+    what()                   | returns const char* error message
+    noexcept                 | promise that function will never throw
+    nested class             | class inside class, belongs to outer class
+    Outer::Inner::method()   | how to define nested class method in .cpp
+    catch order              | specific before general, top to bottom
+    separate try/catch       | use when testing independent operations
+
+================================================================================
+END OF NOTES
+================================================================================
