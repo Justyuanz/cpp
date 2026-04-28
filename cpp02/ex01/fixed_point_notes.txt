@@ -1,0 +1,170 @@
+================================================================================
+FIXED-POINT NUMBERS - CLEAR NOTES
+================================================================================
+
+--------------------------------------------------------------------------------
+1. THE CORE IDEA - STORING CENTS INSTEAD OF DOLLARS
+--------------------------------------------------------------------------------
+
+The problem: computers struggle to store decimals like 42.42 perfectly.
+The solution: store it as a big integer instead, then divide when you need it back.
+
+Real life example:
+    $42.99  ->  store as 4299 cents  (multiply by 100)
+    4299    ->  get back $42.99      (divide by 100)
+
+Fixed-point is the same idea, just using 256 instead of 100:
+    42.42   ->  store as 10860       (multiply by 256)
+    10860   ->  get back 42.42       (divide by 256)
+
+Why 256 and not 100? Because computers work in binary (powers of 2).
+256 = 2^8, and we have 8 fractional bits.
+
+
+--------------------------------------------------------------------------------
+2. BINARY AND BIT SHIFTING
+--------------------------------------------------------------------------------
+
+In binary, every number is stored as 0s and 1s:
+    10  in binary = 00001010
+
+Shifting LEFT (<<) moves all bits to the left, filling with 0s on the right:
+    00001010  <<1  =  00010100  (10 becomes 20,  multiplied by 2)
+    00001010  <<2  =  00101000  (10 becomes 40,  multiplied by 4)
+    00001010  <<8  =  1010 00000000 (10 becomes 2560, multiplied by 256)
+
+Shifting RIGHT (>>) moves all bits to the right:
+    00101000  >>2  =  00001010  (40 becomes 10,  divided by 4)
+    1010 00000000  >>8  =  00001010 (2560 becomes 10, divided by 256)
+
+RULE:
+    x << 8  =  x * 256   (shift left  8 = multiply by 2^8)
+    x >> 8  =  x / 256   (shift right 8 = divide   by 2^8)
+
+
+--------------------------------------------------------------------------------
+3. CONVERTING INT TO FIXED-POINT
+--------------------------------------------------------------------------------
+
+Code:
+    _value = value << 8;
+
+What happens step by step:
+    value = 10
+    10 << 8  =  10 * 256  =  2560
+    _value = 2560
+
+Why? We need to "make room" for the 8 fractional bits.
+Shifting left by 8 moves the integer part up, leaving 8 empty bits below it
+for the fractional part.
+
+Think of it like:
+    normal int:    [integer bits]
+    fixed-point:   [integer bits][8 fractional bits]
+    
+    10 in fixed-point: [00001010][00000000] = 2560
+
+
+--------------------------------------------------------------------------------
+4. CONVERTING FLOAT TO FIXED-POINT
+--------------------------------------------------------------------------------
+
+Code:
+    _value = roundf(value * (1 << 8));
+
+What happens step by step:
+    value = 42.42
+    1 << 8 = 256
+    42.42 * 256 = 10859.52
+    roundf(10859.52) = 10860
+    _value = 10860
+
+Why roundf? Because _value is an integer - it cannot store 10859.52.
+roundf rounds to the nearest whole number so we don't lose too much precision.
+
+    roundf(10859.52) = 10860   (rounds up)
+    roundf(10859.49) = 10859   (rounds down)
+
+
+--------------------------------------------------------------------------------
+5. CONVERTING BACK TO FLOAT (toFloat)
+--------------------------------------------------------------------------------
+
+Code:
+    return ((float)_value / (1 << _bits));
+
+What happens step by step:
+    _value = 10860
+    1 << _bits = 1 << 8 = 256
+    (float)10860 / 256 = 42.4219...
+
+Why (float) cast? Because _value is an int.
+Without the cast, int / int = int (loses the decimal):
+    10860 / 256 = 42      <- wrong, integer division
+    (float)10860 / 256 = 42.4219  <- correct
+
+
+--------------------------------------------------------------------------------
+6. CONVERTING BACK TO INT (toInt)
+--------------------------------------------------------------------------------
+
+Code:
+    return (_value >> _bits);
+
+What happens step by step:
+    _value = 2560  (which was 10 stored as fixed-point)
+    2560 >> 8  =  2560 / 256  =  10
+    returns 10
+
+Just the reverse of converting int to fixed-point.
+Shift right by 8 removes the 8 fractional bits, leaving just the integer part.
+
+
+--------------------------------------------------------------------------------
+7. OPERATOR<< OVERLOAD
+--------------------------------------------------------------------------------
+
+Code:
+    std::ostream &operator<<(std::ostream &out, const Fixed &fixed)
+    {
+        out << fixed.toFloat();
+        return (out);
+    }
+
+You already know:
+    std::cout << "hello";   // prints to screen
+
+std::cout is of type std::ostream.
+When you write:
+    std::cout << a;   // a is a Fixed object
+
+C++ looks for a function that handles ostream << Fixed.
+It does not exist by default, so you define it yourself.
+
+The function receives:
+    out   = the stream (std::cout in this case)
+    fixed = the Fixed object being printed
+
+It converts Fixed to float and sends it to the stream.
+Then returns the stream so you can chain:
+    std::cout << "a is " << a << std::endl;
+    //                      ^
+    //                      operator<< returns out, so chaining works
+
+
+--------------------------------------------------------------------------------
+8. WHY 1 << 8 INSTEAD OF JUST WRITING 256
+--------------------------------------------------------------------------------
+
+Both are identical:
+    value * 256
+    value * (1 << 8)
+
+Using (1 << _bits) is better because:
+    - _bits is your class variable (= 8)
+    - if _bits ever changed, the math still works automatically
+    - makes the relationship between bits and the multiplier explicit
+
+================================================================================
+END OF NOTES
+================================================================================

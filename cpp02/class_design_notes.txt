@@ -1,0 +1,279 @@
+================================================================================
+CLASS DESIGN IN C++ - CLEAR NOTES
+================================================================================
+
+
+--------------------------------------------------------------------------------
+1. BASIC CLASS STRUCTURE
+--------------------------------------------------------------------------------
+
+class MyClass
+{
+private:
+    // DATA - what the class STORES
+    // only this class can access these
+    int         _value;
+    std::string _name;
+
+public:
+    // CONSTRUCTORS - how the class is CREATED
+    MyClass(void);                      // default constructor
+    MyClass(const int value);           // parameterized constructor
+    MyClass(const MyClass &other);      // copy constructor
+    ~MyClass(void);                     // destructor
+
+    // ASSIGNMENT - how the class is COPIED
+    MyClass &operator=(const MyClass &other);
+
+    // GETTERS - read private data
+    int getValue(void) const;
+    std::string getName(void) const;
+
+    // SETTERS - modify private data
+    void setValue(int value);
+    void setName(const std::string &name);
+
+    // OPERATIONS - what the class can DO
+    void print(void) const;
+};
+
+RULE: data goes in private, everything else in public.
+      private = what it IS
+      public  = what it DOES
+
+
+--------------------------------------------------------------------------------
+2. ORTHODOX CANONICAL FORM - THE 4 MANDATORY FUNCTIONS
+--------------------------------------------------------------------------------
+
+Every class in C++ must have these 4 functions.
+This is called the "Rule of Three" or "Orthodox Canonical Form" in 42.
+
+    // 1. DEFAULT CONSTRUCTOR - creates object with default values
+    MyClass(void);
+
+    // 2. COPY CONSTRUCTOR - creates NEW object from existing one
+    MyClass(const MyClass &other);
+
+    // 3. COPY ASSIGNMENT OPERATOR - copies into EXISTING object
+    MyClass &operator=(const MyClass &other);
+
+    // 4. DESTRUCTOR - cleans up when object is destroyed
+    ~MyClass(void);
+
+When each is called:
+    MyClass a;          // default constructor
+    MyClass b(a);       // copy constructor    - b is brand new
+    MyClass c = a;      // copy constructor    - c is brand new
+    c = b;              // copy assignment     - c already exists
+    // end of scope     // destructor called on a, b, c
+
+Implementation pattern:
+    // default constructor
+    MyClass::MyClass(void) : _value(0), _name("")
+    {
+    }
+
+    // copy constructor
+    MyClass::MyClass(const MyClass &other) : _value(other._value), _name(other._name)
+    {
+    }
+
+    // copy assignment operator
+    MyClass &MyClass::operator=(const MyClass &other)
+    {
+        if (this == &other)       // self assignment check
+            return (*this);
+        _value = other._value;    // copy all members
+        _name  = other._name;
+        return (*this);           // return self for chaining
+    }
+
+    // destructor
+    MyClass::~MyClass(void)
+    {
+    }
+
+Why the self assignment check in operator=?
+    a = a;   // without check, copies a into itself, pointless and can cause bugs
+
+
+--------------------------------------------------------------------------------
+3. WHEN TO USE const
+--------------------------------------------------------------------------------
+
+const appears in 3 places in class design:
+
+    // 1. const PARAMETER - function will not modify the input
+    void setName(const std::string &name);
+    //           ^
+    //           name cannot be changed inside the function
+
+    // 2. const MEMBER FUNCTION - function will not modify the object
+    int getValue(void) const;
+    //                   ^
+    //                   this function cannot change _value or any member
+
+    // 3. const MEMBER VARIABLE - value never changes
+    static const int _bits = 8;
+    //               ^
+    //               cannot be changed after initialization
+
+RULE FOR const MEMBER FUNCTIONS:
+    - getters should always be const  (just reading, not modifying)
+    - setters should never be const   (they modify the object)
+    - operators that compare should be const  (> < == !=)
+    - operators that modify should not be const  (= ++ --)
+
+    int getValue(void) const;     // getter, reads only -> const
+    void setValue(int v);         // setter, modifies   -> not const
+    bool operator>(const Fixed &other) const;   // compares, reads only -> const
+    Fixed &operator++(void);      // modifies self -> not const
+
+CONST OBJECT RULE:
+    Fixed const b(10);   // b is const, cannot be modified
+    b.getValue();        // only works if getValue() is marked const
+    b.setValue(5);       // ERROR, setValue is not const
+
+
+--------------------------------------------------------------------------------
+4. WHEN TO USE static
+--------------------------------------------------------------------------------
+
+static member = belongs to the CLASS, not to any object.
+
+    class Fixed {
+        static const int _bits = 8;   // one shared copy for ALL Fixed objects
+    };
+
+    Fixed a, b, c;
+    // a, b, c all share the same _bits = 8
+    // it is not stored inside a, b, or c
+    // it belongs to Fixed the class itself
+
+Use static when:
+    - the value is the same for ALL objects of the class
+    - the value describes the CLASS itself, not individual objects
+    - you want to call a function without needing an object
+
+    // static member variable - shared by all objects
+    static const int _bits = 8;
+
+    // static member function - called on class, not object
+    static Fixed &min(Fixed &a, Fixed &b);
+    Fixed::min(a, b);   // called on class, no object needed
+
+Non-static vs static:
+    Fixed a(5);
+    a.toFloat();          // non-static, needs object a
+    Fixed::min(a, b);     // static, called on class directly
+
+
+--------------------------------------------------------------------------------
+5. WHEN TO USE & (REFERENCE) IN CLASS DESIGN
+--------------------------------------------------------------------------------
+
+References appear in 3 places:
+
+    // 1. PARAMETERS - avoid copying, see original
+    void foo(const MyClass &other)   // no copy made, sees original
+    void foo(MyClass other)          // copy made, expensive for big objects
+
+    // 2. RETURN TYPE - return existing object without copying
+    MyClass &operator=(const MyClass &other)   // return self for chaining
+    static MyClass &min(MyClass &a, MyClass &b) // return one of the inputs
+
+    // 3. MEMBER VARIABLE - permanent alias to another object
+    class HumanA {
+        Weapon &_weapon;   // always refers to same weapon, cannot be null
+    };
+
+RULES:
+    - pass by reference when object already exists and you do not want a copy
+    - return by reference when returning something that already exists outside
+    - return by value when returning something new created inside the function
+    - use const & when you do not need to modify the parameter
+
+
+--------------------------------------------------------------------------------
+6. PRIVATE VS PUBLIC - WHAT GOES WHERE
+--------------------------------------------------------------------------------
+
+PRIVATE:
+    - data members (_value, _name, _bits)
+    - helper functions only used internally
+    - anything the outside world should not touch directly
+
+PUBLIC:
+    - constructors and destructor
+    - getters and setters
+    - operators
+    - any function the outside world needs to use
+
+PROTECTED (for inheritance later):
+    - things private to the class but accessible to derived classes
+
+Naming convention at 42:
+    int _value;     // underscore prefix = private member
+    int value;      // no underscore = local variable or parameter
+
+
+--------------------------------------------------------------------------------
+7. INITIALIZER LIST - THE CORRECT WAY TO INITIALIZE MEMBERS
+--------------------------------------------------------------------------------
+
+Wrong way (assignment inside constructor body):
+    MyClass::MyClass(void)
+    {
+        _value = 0;     // default constructed first, then assigned
+        _name  = "";    // two steps, inefficient
+    }
+
+Correct way (initializer list):
+    MyClass::MyClass(void) : _value(0), _name("")
+    {
+        // directly initialized, one step
+    }
+
+Why initializer list is better:
+    - members are initialized directly, not default constructed then assigned
+    - required for const members and reference members (cannot assign after creation)
+    - more efficient for complex objects like std::string
+
+Required for:
+    const int _bits = 8;      // must use initializer list
+    Weapon &_weapon;          // must use initializer list, references need binding at creation
+
+
+--------------------------------------------------------------------------------
+8. QUICK DESIGN CHECKLIST
+--------------------------------------------------------------------------------
+
+When designing a class, ask these questions:
+
+    1. What data does it store?
+       -> private members with _ prefix
+
+    2. Does any data never change?
+       -> make it const (and static if shared by all objects)
+
+    3. Does any data need to be shared across all objects?
+       -> make it static
+
+    4. What are the 4 canonical form functions?
+       -> default constructor, copy constructor, operator=, destructor
+
+    5. Which functions only READ data?
+       -> mark them const
+
+    6. Which parameters should not be copied?
+       -> pass by const reference
+
+    7. What does each function return?
+       -> bool for comparisons
+       -> by value for new objects
+       -> by reference for existing objects or self
+
+================================================================================
+END OF NOTES
+================================================================================

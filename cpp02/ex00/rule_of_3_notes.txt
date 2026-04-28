@@ -1,0 +1,513 @@
+Rule of 3 in C++ 
+
+operator overloading:
+how C++ syntax works — you write operator followed by the symbol you want to define:
+operator=    // defines =
+operator+    // defines +
+operator<<   // defines <<  (like std::cout uses)
+operator==   // defines ==
+
+So operator= is literally the function name. When you write:
+c = b;
+C++ secretly calls:
+c.operator=(b);   // exact same thing
+
+
+1. What the Rule of 3 means
+
+If your class manually manages a resource, you usually need to write these 3 things yourself:
+
+1. destructor
+2. copy constructor
+3. copy assignment operator
+
+This is called the Rule of 3.
+
+Typical managed resources:
+- dynamic memory with new / delete
+- file handles
+- sockets
+- mutex-like ownership objects
+- any raw resource that needs cleanup
+
+
+2. Why the Rule of 3 exists
+
+If your class has a raw pointer like this:
+
+class Foo
+{
+private:
+    int* p;
+};
+
+then the compiler’s default copy behavior is usually too shallow.
+
+It will copy the pointer value, not the data the pointer points to.
+
+That means two objects may end up pointing to the same memory.
+
+Then problems happen:
+- changing one object affects the other unexpectedly
+- both destructors try to free the same memory
+- double free / crash / undefined behavior
+
+
+3. The 3 special member functions
+
+A. Destructor
+
+Purpose: clean up the resource when the object dies.
+
+~Foo();
+
+Example:
+
+~Foo()
+{
+    delete[] p;
+}
+
+This says:
+when a Foo object is destroyed, free the memory it owns.
+
+
+B. Copy constructor
+
+Purpose: create a new object as a copy of another object.
+
+Foo(const Foo& other);
+
+Used in situations like:
+
+Foo a;
+Foo b(a);
+Foo c = a;
+
+This function must usually make a deep copy.
+
+Deep copy means:
+- allocate new memory for the new object
+- copy the actual contents
+- do not just copy the pointer address
+
+Example:
+
+Foo(const Foo& other)
+{
+    size = other.size;
+    p = new int[size];
+    for (int i = 0; i < size; i++)
+        p[i] = other.p[i];
+}
+
+
+C. Copy assignment operator
+
+Purpose: assign one already-existing object to another already-existing object.
+
+Foo& operator=(const Foo& other);
+
+Used in situations like:
+
+Foo a;
+Foo b;
+b = a;
+
+This is not construction.
+b already exists, so this is assignment.
+
+This also must usually do a deep copy.
+
+
+4. Copy constructor vs copy assignment
+
+This is one of the most important distinctions.
+
+Copy constructor:
+Creates a brand new object from another object.
+
+Foo b(a);
+Foo b = a;
+
+Copy assignment operator:
+Replaces the contents of an already existing object.
+
+Foo b;
+b = a;
+
+Memory trick:
+- construction = object is being born
+- assignment = object already exists and gets new contents
+
+
+5. Why shallow copy is dangerous
+
+Bad example:
+
+class Bad
+{
+private:
+    int* p;
+
+public:
+    Bad()
+    {
+        p = new int(42);
+    }
+
+    ~Bad()
+    {
+        delete p;
+    }
+};
+
+If you do:
+
+Bad a;
+Bad b = a;
+
+the default copy constructor copies only the pointer address.
+
+Now both a.p and b.p point to the same memory.
+
+Then when a and b are destroyed:
+- first delete frees the memory
+- second delete tries to free it again
+
+That is a disaster.
+
+
+6. Deep copy
+
+Deep copy means the new object gets its own separate resource.
+
+Example idea:
+- a owns memory at address X
+- b should get newly allocated memory at address Y
+- contents of X are copied into Y
+
+So after copying:
+- a and b have equal data
+- but different memory
+
+That is what you usually want for owning raw pointers.
+
+
+7. Full simple Rule of 3 example
+
+#include <iostream>
+
+class Foo
+{
+private:
+    int* p;
+    int size;
+
+public:
+    Foo(int value = 0, int n = 3)
+    {
+        size = n;
+        p = new int[size];
+        for (int i = 0; i < size; i++)
+            p[i] = value;
+    }
+
+    ~Foo()
+    {
+        delete[] p;
+    }
+
+    Foo(const Foo& other)
+    {
+        size = other.size;
+        p = new int[size];
+        for (int i = 0; i < size; i++)
+            p[i] = other.p[i];
+    }
+
+    Foo& operator=(const Foo& other)
+    {
+        if (this != &other)
+        {
+            delete[] p;
+
+            size = other.size;
+            p = new int[size];
+            for (int i = 0; i < size; i++)
+                p[i] = other.p[i];
+        }
+        return *this;
+    }
+
+    void set(int index, int value)
+    {
+        if (index >= 0 && index < size)
+            p[index] = value;
+    }
+
+    void print() const
+    {
+        for (int i = 0; i < size; i++)
+            std::cout << p[i] << " ";
+        std::cout << "\n";
+    }
+};
+
+
+8. Why return *this; in operator=
+
+This part:
+
+return *this;
+
+returns the current object.
+
+That allows chained assignment:
+
+a = b = c;
+
+Because:
+- b = c returns b
+- then a = (result) works
+
+That is why the return type is:
+
+Foo&
+
+not just Foo.
+
+
+9. Why check if (this != &other)
+
+This is the self-assignment check.
+
+if (this != &other)
+
+It protects against:
+
+a = a;
+
+Without the check, you might do this:
+- delete your own memory
+- then try to copy from the same now-broken object
+
+Very bad.
+
+So:
+- this = pointer to current object
+- &other = address of source object
+
+If they are the same object, skip the copying work.
+
+
+10. Why const Foo& other
+
+Foo(const Foo& other)
+Foo& operator=(const Foo& other)
+
+Why const?
+
+Because we want to read from other, not modify it.
+
+Why &?
+
+Because passing by reference avoids making another copy.
+
+So this means:
+- take the source object by reference
+- do not modify the source object
+
+Important:
+the const applies to other, not to the new object being created.
+
+So the copied object can still be modified later.
+
+
+11. When the Rule of 3 is needed
+
+You usually need it when your class does ownership like this:
+
+int* p;
+
+and the object is responsible for freeing that memory.
+
+If your class does not own raw resources, you often do not need to write all 3.
+
+Example:
+
+class Person
+{
+private:
+    std::string name;
+    int age;
+};
+
+Here std::string already manages its own memory safely, so usually no custom Rule of 3 code is needed.
+
+
+12. A very common exam/interview sentence
+
+If a class needs a custom destructor, it often also needs a custom copy constructor and copy assignment operator.
+
+That is the main idea behind the Rule of 3.
+
+Because:
+if cleanup must be custom, copy behavior usually must be custom too.
+
+
+13. Common mistakes
+
+Mistake 1: only writing destructor
+
+~Foo() { delete[] p; }
+
+but not writing copy constructor and assignment operator.
+
+Then copying is still shallow, so crashes can happen.
+
+Mistake 2: shallow copy inside copy constructor
+
+p = other.p;
+
+This copies the address only, not the data.
+
+Mistake 3: forgetting self-assignment in operator=
+
+a = a;
+
+can break your object if not handled.
+
+Mistake 4: forgetting to free old memory in operator=
+
+When assigning into an existing object, you must handle the old resource correctly.
+
+Mistake 5: returning wrong type from operator=
+
+Usually it should return Foo&.
+
+
+14. Visual model
+
+Suppose:
+
+Foo a;
+
+Inside a:
+- a.p points to memory block A
+
+Then:
+
+Foo b = a;
+
+Good deep copy result:
+- a.p points to memory block A
+- b.p points to memory block B
+- contents of B are copied from A
+
+Bad shallow copy result:
+- a.p points to A
+- b.p also points to A
+
+That is what causes trouble.
+
+
+15. One more safer assignment version
+
+A simple version is okay for learning, but another good pattern is:
+
+Foo& operator=(const Foo& other)
+{
+    if (this != &other)
+    {
+        int* new_p = new int[other.size];
+        for (int i = 0; i < other.size; i++)
+            new_p[i] = other.p[i];
+
+        delete[] p;
+        p = new_p;
+        size = other.size;
+    }
+    return *this;
+}
+
+Why this is safer:
+
+It allocates new memory first, then deletes the old memory after allocation succeeds.
+
+So the object is less likely to be left broken if allocation fails.
+
+
+16. Rule of 3 in one sentence
+
+If your class manually owns a resource, you must think about:
+- how to destroy it
+- how to copy it when creating a new object
+- how to copy it when assigning to an existing object
+
+That is the Rule of 3.
+
+
+17. Super short memorization version
+
+Rule of 3:
+- destructor
+- copy constructor
+- copy assignment operator
+
+Needed when a class owns raw resources.
+
+Why:
+default copy is shallow.
+
+Goal:
+make deep copy and safe cleanup.
+
+
+18. Mini cheat sheet
+
+class Foo
+{
+private:
+    int* p;
+    int size;
+
+public:
+    Foo();                            // constructor
+    ~Foo();                           // destructor
+    Foo(const Foo& other);            // copy constructor
+    Foo& operator=(const Foo& other); // copy assignment
+};
+
+When used:
+
+Foo a;        // constructor
+Foo b(a);     // copy constructor
+Foo c = a;    // copy constructor
+b = a;        // copy assignment
+
+
+19. One important modern note
+
+In modern C++, raw new / delete is often avoided.
+
+People prefer:
+- std::vector
+- std::string
+- smart pointers
+- RAII classes
+
+Then the Rule of 3 often becomes unnecessary in user code.
+
+But for learning C++ object semantics, the Rule of 3 is extremely important.
+
+
+20. Best mental model
+
+Ask these 3 questions for any owning class:
+
+1. When this object dies, who frees the resource?
+2. If I copy this object, do the two objects share the same resource or each own their own copy?
+3. If I assign one object to another, how do I safely replace the old resource?
+
+If you need custom answers to those, you are in Rule of 3 territory.

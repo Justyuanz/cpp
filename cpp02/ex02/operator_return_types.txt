@@ -1,0 +1,197 @@
+================================================================================
+HOW TO DETERMINE RETURN TYPES FOR OPERATOR OVERLOADING
+================================================================================
+
+
+--------------------------------------------------------------------------------
+1. THE CORE QUESTION TO ASK YOURSELF
+--------------------------------------------------------------------------------
+
+When overloading an operator, always ask:
+    "What does this operation PRODUCE?"
+
+    a > b        -> produces true or false          -> return bool
+    a + b        -> produces a new number           -> return Fixed (by value)
+    a = b        -> modifies a, returns a itself    -> return Fixed& (reference)
+    a++          -> returns old a, then changes a   -> return Fixed (by value, copy)
+
+
+--------------------------------------------------------------------------------
+2. COMPARISON OPERATORS -> return bool
+--------------------------------------------------------------------------------
+
+Operators: >  <  >=  <=  ==  !=
+
+Rule: comparing two things always gives yes or no.
+
+    bool operator>(const Fixed &other) const;
+    bool operator<(const Fixed &other) const;
+    bool operator>=(const Fixed &other) const;
+    bool operator<=(const Fixed &other) const;
+    bool operator==(const Fixed &other) const;
+    bool operator!=(const Fixed &other) const;
+
+Example:
+    if (a > b)       // is this true or false?
+    if (a == b)      // is this true or false?
+
+Real life analogy:
+    "Is this box heavier than that box?" -> yes or no -> bool
+
+
+--------------------------------------------------------------------------------
+3. ARITHMETIC OPERATORS -> return Fixed (by value)
+--------------------------------------------------------------------------------
+
+Operators: +  -  *  /
+
+Rule: combining two things produces a BRAND NEW thing.
+      neither original changes.
+
+    Fixed operator+(const Fixed &other) const;
+    Fixed operator-(const Fixed &other) const;
+    Fixed operator*(const Fixed &other) const;
+    Fixed operator/(const Fixed &other) const;
+
+Example:
+    Fixed result = a + b;
+//  a and b are unchanged
+//  a brand new Fixed is created and stored in result
+
+Why return by VALUE and not reference?
+    - You are creating a new temporary object inside the function
+    - Returning a reference to a local variable = dangling reference (crash)
+    - Must return a copy so it survives after the function ends
+
+Real life analogy:
+    mixing red paint + blue paint -> produces NEW purple paint
+    red and blue still exist unchanged
+
+
+--------------------------------------------------------------------------------
+4. ASSIGNMENT OPERATORS -> return Fixed& (reference to self)
+--------------------------------------------------------------------------------
+
+Operators: =  +=  -=  *=  /=  prefix++ prefix--
+
+Rule: you are MODIFYING the object itself, then returning it for chaining.
+
+    Fixed &operator=(const Fixed &other);
+    Fixed &operator++(void);    // prefix ++a
+    Fixed &operator--(void);    // prefix --a
+
+Example:
+    a = b = c;
+//  step 1: b = c  -> modifies b, returns b&
+//  step 2: a = b  -> modifies a, returns a&
+//  chaining works because each = returns a reference to itself
+
+Why return REFERENCE and not value?
+    - You modified the object itself, not a copy
+    - Returning a reference avoids unnecessary copying
+    - Allows chaining (a = b = c)
+
+Real life analogy:
+    painting a wall and handing back the same wall (not a photo of it)
+
+
+--------------------------------------------------------------------------------
+5. POSTFIX INCREMENT/DECREMENT -> return Fixed (by value, copy)
+--------------------------------------------------------------------------------
+
+Operators: a++  a--
+
+Rule: postfix returns the OLD value BEFORE the change.
+      so you must save a copy first, then increment, then return the copy.
+
+    Fixed operator++(int);   // int parameter = postfix, it's just a signal to compiler
+    Fixed operator--(int);   // not actually used inside the function
+
+Implementation:
+    Fixed operator++(int)
+    {
+        Fixed old = *this;   // save copy of current value
+        _value++;            // increment self
+        return (old);        // return the OLD value before increment
+    }
+
+Example:
+    Fixed a(5);
+    Fixed b = a++;   // b = 5 (old value), a = 6 (incremented)
+    Fixed c = ++a;   // c = 7 (new value), a = 7 (same object)
+
+Why return by VALUE and not reference?
+    - old is a local variable inside the function
+    - returning reference to local = dangling reference (crash)
+    - must return a copy
+
+Why does postfix take an (int) parameter?
+    - it is just a dummy parameter
+    - C++ uses it to tell prefix (no param) from postfix (int param) apart
+    - you never use that int inside the function
+
+
+--------------------------------------------------------------------------------
+6. STREAM OPERATOR -> return std::ostream&
+--------------------------------------------------------------------------------
+
+Operator: <<
+
+Rule: must return the stream so chaining works.
+
+    std::ostream &operator<<(std::ostream &stream, const Fixed &number);
+
+Example:
+    std::cout << "a is " << a << std::endl;
+//  each << returns the stream, allowing the next << to use it
+
+
+--------------------------------------------------------------------------------
+7. STATIC MIN/MAX -> return reference to existing object
+--------------------------------------------------------------------------------
+
+    static Fixed &min(Fixed &a, Fixed &b);
+    static const Fixed &min(const Fixed &a, const Fixed &b);
+
+Rule: you are not creating anything new, just picking one of the two that already exist.
+      return a reference to whichever one wins.
+
+Why reference and not value?
+    - you are returning one of the inputs that already exists
+    - no need to copy, just point back to the winner
+
+Why two versions (const and non-const)?
+    - if you pass non-const objects, you get back a non-const reference (can modify)
+    - if you pass const objects, you get back a const reference (cannot modify)
+
+Example:
+    Fixed &result = Fixed::min(a, b);    // result points to whichever is smaller
+
+
+--------------------------------------------------------------------------------
+8. QUICK REFERENCE TABLE
+--------------------------------------------------------------------------------
+
+    Operator          | Return type          | Reason
+    ------------------|----------------------|--------------------------------
+    > < >= <= == !=   | bool                 | yes/no answer
+    + - * /           | Fixed (by value)     | creates new object
+    = prefix++ prefix--| Fixed& (reference)  | modifies self, allows chaining
+    postfix++ postfix--| Fixed (by value)    | returns old copy before change
+    <<                | std::ostream&        | allows chaining
+    min / max         | Fixed& (reference)   | returns one of the inputs
+
+
+--------------------------------------------------------------------------------
+9. THE GOLDEN RULES
+--------------------------------------------------------------------------------
+
+1. Produces a yes/no answer?              -> bool
+2. Creates something NEW?                 -> return by value
+3. Modifies self and needs chaining?      -> return by reference
+4. Returns OLD value before change?       -> return by value (copy)
+5. Just picking from existing objects?    -> return by reference
+
+================================================================================
+END OF NOTES
+================================================================================
