@@ -1,0 +1,434 @@
+================================================================================
+C++ INHERITANCE (MODULE 03) - CLEAR PRACTICAL NOTES
+================================================================================
+
+
+--------------------------------------------------------------------------------
+1. WHAT IS INHERITANCE - THE CORE IDEA
+--------------------------------------------------------------------------------
+
+Inheritance lets one class (derived) reuse and extend another class (base).
+
+Instead of rewriting the same code:
+    // BAD - code duplication
+    class ClapTrap {
+        std::string _name;
+        int _hitPoints;
+        void attack();
+    };
+
+    class ScavTrap {
+        std::string _name;      // copied
+        int _hitPoints;         // copied
+        void attack();          // copied
+        void guardGate();       // new ability
+    };
+
+You inherit:
+    // GOOD - code reuse
+    class ClapTrap {
+        std::string _name;
+        int _hitPoints;
+        void attack();
+    };
+
+    class ScavTrap : public ClapTrap {  // inherits everything above
+        void guardGate();               // just add what is new
+    };
+
+Real life analogy:
+    Animal has: eat, sleep, move
+    Dog inherits from Animal, adds: bark
+
+
+--------------------------------------------------------------------------------
+2. THE SYNTAX - HOW TO CREATE INHERITANCE
+--------------------------------------------------------------------------------
+
+Base class (the parent):
+    class ClapTrap {
+    protected:  // important: use protected, not private
+        std::string _name;
+        int _hitPoints;
+    public:
+        ClapTrap(const std::string &name);
+        ~ClapTrap();
+        void attack();
+    };
+
+Derived class (the child):
+    class ScavTrap : public ClapTrap {
+    //              ^
+    //              inherit from ClapTrap
+    public:
+        ScavTrap(const std::string &name);
+        ~ScavTrap();
+        void guardGate();
+    };
+
+The `: public ClapTrap` means:
+    - ScavTrap inherits all members and functions from ClapTrap
+    - the public keyword = public inheritance (what you always use)
+
+Now ScavTrap HAS:
+    - _name (from ClapTrap)
+    - _hitPoints (from ClapTrap)
+    - attack() (from ClapTrap)
+    - guardGate() (new, only in ScavTrap)
+
+
+--------------------------------------------------------------------------------
+3. PRIVATE VS PROTECTED - THE KEY DIFFERENCE FOR INHERITANCE
+--------------------------------------------------------------------------------
+
+private:
+    - only THIS class can access
+    - derived classes CANNOT access
+
+    class ClapTrap {
+    private:
+        int _hitPoints;   // ScavTrap cannot touch this
+    };
+
+    class ScavTrap : public ClapTrap {
+        void takeDamage() {
+            _hitPoints -= 10;   // ERROR - private, ScavTrap cannot access
+        }
+    };
+
+protected:
+    - this class can access
+    - derived classes CAN access
+    - outside world CANNOT access
+
+    class ClapTrap {
+    protected:
+        int _hitPoints;   // ScavTrap CAN access this
+    };
+
+    class ScavTrap : public ClapTrap {
+        void takeDamage() {
+            _hitPoints -= 10;   // OK - protected, ScavTrap can access
+        }
+    };
+
+Three access levels:
+    private:    | ClapTrap | ScavTrap | Outside |
+    ------------|----------|----------|---------|
+    private     |    ✓     |    ✗     |    ✗    |
+    protected   |    ✓     |    ✓     |    ✗    |
+    public      |    ✓     |    ✓     |    ✓    |
+
+RULE FOR MODULE 03: Use protected for inherited members.
+
+
+--------------------------------------------------------------------------------
+4. CONSTRUCTOR ORDER - BASE FIRST, THEN DERIVED
+--------------------------------------------------------------------------------
+
+When you create a derived class object, constructors run in ORDER:
+
+    ScavTrap s("Alice");
+
+Step by step:
+
+    1. ClapTrap constructor runs FIRST
+       ClapTrap("Alice")
+       _name = "Alice"
+       _hitPoints = 10
+       _energyPoints = 10
+       _attackDamage = 0
+       prints: "ClapTrap constructor called"
+
+    2. ScavTrap constructor body runs AFTER
+       _hitPoints = 100    (override inherited value)
+       _energyPoints = 50  (override inherited value)
+       _attackDamage = 20  (override inherited value)
+       prints: "ScavTrap constructor called"
+
+Result: ScavTrap object with ClapTrap initialized first, then customized.
+
+Code example:
+    ScavTrap::ScavTrap(const std::string &name) : ClapTrap(name)
+    //                                            ^
+    //                                            base constructor called first
+    {
+        _hitPoints = 100;      // customize inherited members
+        _energyPoints = 50;
+        _attackDamage = 20;
+        std::cout << "ScavTrap constructor called" << std::endl;
+    }
+
+Output when ScavTrap s("Alice"); is created:
+    ClapTrap constructor called      <- base first
+    ScavTrap constructor called      <- then derived
+
+
+--------------------------------------------------------------------------------
+5. DESTRUCTOR ORDER - REVERSE OF CONSTRUCTOR
+--------------------------------------------------------------------------------
+
+When an object is destroyed, destructors run in REVERSE order:
+
+    ScavTrap s("Alice");
+    // ... use s ...
+    // s goes out of scope
+
+Step by step:
+
+    1. ScavTrap destructor runs FIRST
+       prints: "ScavTrap destructor called"
+
+    2. ClapTrap destructor runs AFTER
+       prints: "ClapTrap destructor called"
+
+This is important: base cleanup happens last, after derived cleanup.
+
+Output when s is destroyed:
+    ScavTrap destructor called       <- derived first
+    ClapTrap destructor called       <- then base
+
+RULE: Constructor order is base -> derived
+      Destructor order is derived -> base (reverse)
+
+
+--------------------------------------------------------------------------------
+6. COPY CONSTRUCTOR IN DERIVED CLASSES
+--------------------------------------------------------------------------------
+
+You need to implement copy constructor for the derived class.
+It must call the BASE CLASS copy constructor in the initializer list.
+
+Code:
+    ScavTrap::ScavTrap(const ScavTrap &other) : ClapTrap(other)
+    //                                          ^
+    //                                          call base copy constructor
+    {
+        std::cout << "ScavTrap copy constructor called" << std::endl;
+    }
+
+How it works:
+    ScavTrap s1("Alice");
+    ScavTrap s2(s1);   // copy constructor called
+
+Step by step:
+
+    1. ClapTrap copy constructor runs FIRST
+       : ClapTrap(other)
+       copies _name, _hitPoints, _energyPoints, _attackDamage from s1
+
+    2. ScavTrap constructor body runs
+       prints: "ScavTrap copy constructor called"
+
+Result: s2 is an exact copy of s1, with base members copied first.
+
+WHY : ClapTrap(other) and not in the body?
+    - Base members belong to ClapTrap, not ScavTrap
+    - Must use initializer list syntax for base class
+    - Body modification comes AFTER base construction
+
+
+--------------------------------------------------------------------------------
+7. COPY ASSIGNMENT OPERATOR IN DERIVED CLASSES
+--------------------------------------------------------------------------------
+
+You need to implement assignment operator for the derived class.
+It must call the BASE CLASS assignment operator in the body (not initializer list).
+
+Code:
+    ScavTrap &ScavTrap::operator=(const ScavTrap &other)
+    {
+        std::cout << "ScavTrap copy assignment operator called" << std::endl;
+        if (this != &other)
+            ClapTrap::operator=(other);   // call base assignment
+        return (*this);
+    }
+
+How it works:
+    ScavTrap s1("Alice");
+    ScavTrap s2("Bob");
+    s2 = s1;   // assignment operator called
+
+Step by step:
+
+    1. Self assignment check
+       if (this != &other)
+       don't do anything if s2 = s2
+
+    2. Call base assignment operator
+       ClapTrap::operator=(other);
+       copies _name, _hitPoints, _energyPoints, _attackDamage from s1 to s2
+
+    3. Return self for chaining
+       return (*this);
+
+Result: s2 now has the same values as s1.
+
+WHY in the body and not initializer list?
+    - assignment operator cannot be called in initializer list
+    - must be called in function body
+    - different from copy constructor syntax
+
+
+--------------------------------------------------------------------------------
+8. FUNCTION OVERRIDING - CHILD REPLACES PARENT FUNCTION
+--------------------------------------------------------------------------------
+
+A derived class can REPLACE a base class function with its own version.
+
+Base class:
+    class ClapTrap {
+    public:
+        void attack() {
+            std::cout << _name << " attacks!" << std::endl;
+        }
+    };
+
+Derived class OVERRIDES attack():
+    class ScavTrap : public ClapTrap {
+    public:
+        void attack() {   // same function name, different implementation
+            std::cout << _name << " attacks with a gate!" << std::endl;
+        }
+    };
+
+Usage:
+    ScavTrap s("Alice");
+    s.attack();   // calls ScavTrap::attack(), not ClapTrap::attack()
+    // prints: "Alice attacks with a gate!"
+
+IMPORTANT: This is NOT polymorphism yet (that is module 04 with virtual).
+           Right now the function is just replaced.
+
+
+--------------------------------------------------------------------------------
+9. THE DIAMOND PROBLEM - MULTIPLE INHERITANCE (EX03)
+--------------------------------------------------------------------------------
+
+The problem:
+    class A { int x; };
+    class B : public A {};
+    class C : public A {};
+    class D : public B, public C {};  // inherits from B and C
+
+Diamond shape:
+        A
+       / \
+      B   C
+       \ /
+        D
+
+Question: Does D have one copy of x (from A) or two copies?
+Answer: Two copies by default (problem!)
+
+Solution: Virtual inheritance
+    class B : virtual public A {};  // tell C++ A is shared
+    class C : virtual public A {};
+
+Now D has only one copy of x from A.
+
+For module 03 you probably don't need this yet, but it is in ex03.
+
+
+--------------------------------------------------------------------------------
+10. QUICK IMPLEMENTATION CHECKLIST FOR A NEW DERIVED CLASS
+--------------------------------------------------------------------------------
+
+When creating a new derived class like FragTrap:
+
+    1. Create FragTrap.hpp
+       class FragTrap : public ClapTrap {
+       public:
+           FragTrap(const std::string &name);
+           FragTrap(const FragTrap &other);
+           FragTrap &operator=(const FragTrap &other);
+           ~FragTrap();
+           void highFivesGuys(void);  // unique ability
+       };
+
+    2. Create FragTrap.cpp
+       FragTrap::FragTrap(const std::string &name) : ClapTrap(name)
+       {
+           _hitPoints = 100;
+           _energyPoints = 100;
+           _attackDamage = 30;
+           std::cout << "FragTrap constructor called" << std::endl;
+       }
+
+       FragTrap::FragTrap(const FragTrap &other) : ClapTrap(other)
+       {
+           std::cout << "FragTrap copy constructor called" << std::endl;
+       }
+
+       FragTrap &FragTrap::operator=(const FragTrap &other)
+       {
+           if (this != &other)
+               ClapTrap::operator=(other);
+           std::cout << "FragTrap copy assignment operator called" << std::endl;
+           return (*this);
+       }
+
+       FragTrap::~FragTrap()
+       {
+           std::cout << "FragTrap destructor called" << std::endl;
+       }
+
+       void FragTrap::highFivesGuys(void)
+       {
+           std::cout << _name << " requests high fives!" << std::endl;
+       }
+
+    3. Test in main.cpp
+       FragTrap f("Frank");
+       f.attack();            // inherited from ClapTrap
+       f.highFivesGuys();     // unique to FragTrap
+
+
+--------------------------------------------------------------------------------
+11. THIS POINTER IN DERIVED CLASSES
+--------------------------------------------------------------------------------
+
+In a derived class member function, `this` always points to the DERIVED object,
+even if you are calling a base class function.
+
+    ScavTrap &ScavTrap::operator=(const ScavTrap &other)
+    {
+        if (this != &other)      // this = &scavtrap_object
+            ClapTrap::operator=(other);   // but called with base scope
+        return (*this);          // returns the ScavTrap object
+    }
+
+Even though you write ClapTrap::operator=, the `this` inside it is still
+the ScavTrap object being assigned.
+
+Think of it as:
+    scavtrap_obj.operator=(other);    // this = &scavtrap_obj
+    ClapTrap::operator=(other);       // this = &scavtrap_obj (same)
+
+
+--------------------------------------------------------------------------------
+12. PROTECTED MEMBERS AND INHERITANCE CHAIN
+--------------------------------------------------------------------------------
+
+If you have 3 levels of inheritance:
+
+    class A {
+    protected:
+        int x;
+    };
+
+    class B : public A {
+        // can access x
+    };
+
+    class C : public B {
+        // can also access x (inherited through B)
+    };
+
+protected members are inherited down the chain.
+Each derived class can access protected members of all ancestors.
+
+
+================================================================================
+END OF NOTES
+================================================================================
