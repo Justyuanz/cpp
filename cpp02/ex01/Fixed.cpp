@@ -29,13 +29,13 @@ Fixed::Fixed(const float n)
 float Fixed::toFloat(void) const
 {
 	//scale back down by 2^8 to recover the original decimal value
-	return static_cast<float>(_value) / (1 << _fractionalBits);
+	return (static_cast<float>(_value) / (1 << _fractionalBits));
 }
 
 int Fixed::toInt(void) const
 {
 	//drop fractional part by shifting right
-	return _value >> _fractionalBits;
+	return (_value >> _fractionalBits);
 }
 
 Fixed& Fixed::operator=(const Fixed &other)

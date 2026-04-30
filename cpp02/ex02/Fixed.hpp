@@ -5,11 +5,11 @@
 
 class Fixed
 {
-private:
+	private:
 	int _value;
 	static const int _fractionalBits = 8;
 
-public:
+	public:
 	Fixed(void);
 	Fixed(const int n);
 	Fixed(const float n);

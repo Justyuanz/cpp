@@ -23,12 +23,12 @@ Fixed::Fixed(const float n)
 
 float Fixed::toFloat(void) const
 {
-	return (float)(_value) / (1 << _fractionalBits);
+	return ((float)(_value) / (1 << _fractionalBits));
 }
 
 int Fixed::toInt(void) const
 {
-	return _value >> _fractionalBits;
+	return (_value >> _fractionalBits);
 }
 
 Fixed& Fixed::operator=(const Fixed &other)

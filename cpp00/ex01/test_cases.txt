@@ -16,5 +16,3 @@
 	input.
 12. Table truncation for long fields (>10 chars): verified VeryLongF. /
 	VeryLongL. / VeryLongN. format.
-13. Index boundary index == count rejected (e.g., only 1 contact, input
-	1 is invalid).

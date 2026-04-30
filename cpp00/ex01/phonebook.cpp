@@ -11,6 +11,7 @@ PhoneBook::PhoneBook()
 PhoneBook::~PhoneBook()
 {
 }
+
 //std::cin.clear() resets stream error state after EOF/fail.
 static bool	read_line(std::string &line)
 {
@@ -192,3 +193,4 @@ void	PhoneBook::search_contact()
 	}
 
 }
+

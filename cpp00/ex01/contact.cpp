@@ -11,7 +11,6 @@ Contact::~Contact()
 {
 }
 
-//class method, 
 //pass by reference. avoids copying
 void Contact::setFirstName(const std::string &first_name)
 {
