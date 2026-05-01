@@ -5,7 +5,7 @@
 
 class ClapTrap
 {
-	//protected = ClapTrap + derived classes (ScavTrap) can access.
+	//protected = ClapTrap + derived classes can access.
 	protected:
 		std::string		_name;
 		unsigned int	_hitPoints = 10;

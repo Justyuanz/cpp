@@ -31,7 +31,7 @@ ScavTrap &ScavTrap::operator=(const ScavTrap &other)
 {
 	std::cout << "ScavTrap copy assignment operator called" << std::endl;
     if (this != &other)
-        ClapTrap::operator=(other); //this always refers to the object the function is called on, not the class
+        ClapTrap::operator=(other);
     return (*this);
 }
 

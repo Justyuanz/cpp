@@ -1,31 +1,43 @@
+#include "ClapTrap.hpp"
 #include "ScavTrap.hpp"
 #include <iostream>
 
 int main(void)
 {
-	std::cout << "\n-- Rule of 3 --" << std::endl;
-	ScavTrap a("Sentinel");
-	ScavTrap b(a);
-	ScavTrap c("Ben");
-	c = a;
+	std::cout << "\n===== CLAPTRAP TEST =====" << std::endl;
+	ClapTrap clap("Clappy");
+	clap.attack("enemy");
+	clap.takeDamage(5);
+	clap.beRepaired(3);
 
-	std::cout << "\n-- Basic actions --" << std::endl;
-	a.attack("intruder");
-	a.guardGate();
-	b.attack("intruder");
-	b.guardGate();
+	std::cout << "\n===== SCAVTRAP CONSTRUCTOR TEST =====" << std::endl;
+	ScavTrap scav("Scavvy");
 
-	std::cout << "\n-- Damage and repair --" << std::endl;
-	c.takeDamage(30);
-	c.beRepaired(10);
-	c.takeDamage(200);  // should drop to 0
-	c.beRepaired(5);    // should be blocked
+	std::cout << "\n===== SCAVTRAP BASIC ACTION TEST =====" << std::endl;
+	scav.attack("enemy");
+	scav.takeDamage(30);
+	scav.beRepaired(10);
+	scav.guardGate();
 
-	std::cout << "\n-- Energy exhaustion --" << std::endl;
-	ScavTrap worker("Worker");
-	for (int i = 0; i < 52; ++i)
-		worker.attack("target"); // should block after EP is 0
+	std::cout << "\n===== SCAVTRAP DEATH TEST =====" << std::endl;
+	scav.takeDamage(200);
+	scav.attack("enemy after death");
+	scav.beRepaired(10);
+	scav.guardGate();
 
+	std::cout << "\n===== SCAVTRAP ENERGY TEST =====" << std::endl;
+	ScavTrap tired("TiredScav");
+	for (int i = 0; i < 51; i++)
+		tired.attack("dummy");
+
+	std::cout << "\n===== COPY TEST =====" << std::endl;
+	ScavTrap copy(scav);
+	copy.attack("copy target");
+
+	ScavTrap assigned("Assigned");
+	assigned = tired;
+	assigned.attack("assigned target");
+
+	std::cout << "\n===== DESTRUCTOR ORDER TEST =====" << std::endl;
 	return (0);
 }
-
