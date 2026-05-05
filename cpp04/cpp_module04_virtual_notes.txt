@@ -1,0 +1,383 @@
+================================================================================
+VIRTUAL FUNCTIONS AND RUNTIME POLYMORPHISM - CLEAR NOTES
+================================================================================
+
+
+--------------------------------------------------------------------------------
+1. THE PROBLEM WITHOUT VIRTUAL
+--------------------------------------------------------------------------------
+
+Without virtual, C++ uses the POINTER TYPE to decide which function to call.
+This is called compile-time dispatch - decided when you compile, not when you run.
+
+    class Animal {
+    public:
+        void makeSound() { std::cout << "..." << std::endl; }
+    };
+
+    class Dog : public Animal {
+    public:
+        void makeSound() { std::cout << "Woof!" << std::endl; }
+    };
+
+    Animal *a = new Dog();   // pointer is Animal*, but object is Dog
+    a->makeSound();          // C++ looks at pointer type (Animal*)
+                             // calls Animal::makeSound()
+                             // prints "..."  <- WRONG, expected "Woof!"
+
+The pointer says Animal, so C++ uses Animal's function.
+It completely ignores the fact that the actual object is a Dog.
+
+Analogy:
+    You receive a box LABELED "Animal"
+    Without virtual: you read the label -> call Animal's function
+    Does not matter what is actually inside the box
+
+
+--------------------------------------------------------------------------------
+2. THE SOLUTION - VIRTUAL KEYWORD
+--------------------------------------------------------------------------------
+
+Adding virtual to the base class function tells C++:
+"Don't look at the pointer type, look at the ACTUAL object."
+
+    class Animal {
+    public:
+        virtual void makeSound() { std::cout << "..." << std::endl; }
+        //^
+        //  now C++ will look at actual object type at runtime
+    };
+
+    class Dog : public Animal {
+    public:
+        void makeSound() { std::cout << "Woof!" << std::endl; }
+    };
+
+    Animal *a = new Dog();   // pointer is Animal*, but object is Dog
+    a->makeSound();          // C++ looks at actual object (Dog)
+                             // calls Dog::makeSound()
+                             // prints "Woof!"  <- CORRECT
+
+With virtual:
+    You receive a box LABELED "Animal"
+    With virtual: you OPEN the box -> find Dog -> call Dog's function
+
+
+--------------------------------------------------------------------------------
+3. RUNTIME POLYMORPHISM - THE CORE CONCEPT
+--------------------------------------------------------------------------------
+
+Polymorphism = "many forms" - same function call, different behavior based on type.
+
+Runtime = decided WHEN THE PROGRAM RUNS, not when you compile.
+
+    Animal *animals[3];
+    animals[0] = new Dog();
+    animals[1] = new Cat();
+    animals[2] = new Dog();
+
+    for (int i = 0; i < 3; i++)
+        animals[i]->makeSound();   // different sound for each!
+    
+    // output:
+    // Woof!   <- Dog
+    // Meow!   <- Cat
+    // Woof!   <- Dog
+
+All three are Animal* pointers, but each calls the RIGHT function
+based on what they actually point to.
+This decision happens at RUNTIME, not at compile time.
+
+Why this is powerful:
+    - you can write code that works for ANY Animal
+    - add new animals (Lion, Bird) without changing existing code
+    - one loop handles all types
+
+
+--------------------------------------------------------------------------------
+4. HOW VIRTUAL WORKS INTERNALLY - VTABLE
+--------------------------------------------------------------------------------
+
+When you mark a function virtual, C++ creates a VTABLE (virtual table)
+for that class - a lookup table of function pointers.
+
+    Animal vtable:
+        makeSound -> Animal::makeSound
+
+    Dog vtable:
+        makeSound -> Dog::makeSound    <- overrides Animal's entry
+
+    Cat vtable:
+        makeSound -> Cat::makeSound    <- overrides Animal's entry
+
+When you call a->makeSound():
+    1. C++ looks at the actual object (Dog)
+    2. Finds Dog's vtable
+    3. Looks up makeSound in the vtable
+    4. Calls Dog::makeSound()
+
+This is why it is called RUNTIME dispatch - the vtable lookup happens
+when the program runs, not when it compiles.
+
+C analogy:
+    // like a function pointer table
+    struct Animal {
+        void (*makeSound)(void);   // function pointer
+    };
+    a->makeSound();   // calls whatever function pointer points to
+
+
+--------------------------------------------------------------------------------
+5. VIRTUAL DESTRUCTOR - CRITICAL FOR POLYMORPHISM
+--------------------------------------------------------------------------------
+
+This is the most common mistake in module 04.
+
+Without virtual destructor:
+    Animal *a = new Dog();
+    delete a;   // calls Animal::~Animal() only
+                // Dog::~Dog() is NEVER called
+                // if Dog has cleanup code, it leaks memory
+
+With virtual destructor:
+    class Animal {
+    public:
+        virtual ~Animal();   // virtual destructor
+    };
+
+    Animal *a = new Dog();
+    delete a;   // calls Dog::~Dog() first, then Animal::~Animal()
+                // correct cleanup order
+
+RULE: If a class has ANY virtual function, ALWAYS make the destructor virtual.
+      If you ever use Animal* to point to derived objects, virtual destructor is mandatory.
+
+Output comparison:
+    // without virtual destructor
+    delete a;
+    // Animal destructor called    <- only this
+
+    // with virtual destructor
+    delete a;
+    // Dog destructor called       <- correct, derived first
+    // Animal destructor called    <- then base
+
+
+--------------------------------------------------------------------------------
+6. PURE VIRTUAL - ABSTRACT CLASSES
+--------------------------------------------------------------------------------
+
+A pure virtual function has no body in the base class.
+It forces derived classes to implement it.
+
+    class Animal {
+    public:
+        virtual void makeSound() = 0;   // pure virtual, no body
+        //                         ^
+        //                         = 0 means pure virtual
+    };
+
+Now Animal is an ABSTRACT CLASS:
+    Animal a;   // ERROR - cannot create abstract class
+    // Animal is just a template, not a real thing
+
+Derived classes MUST implement makeSound():
+    class Dog : public Animal {
+    public:
+        void makeSound() { std::cout << "Woof!" << std::endl; }
+        // MUST implement, or Dog is also abstract
+    };
+
+    Dog d;   // OK - Dog implements makeSound()
+
+Real life analogy:
+    Animal is a blueprint - you cannot build a blueprint
+    Dog is a real house built from the blueprint
+    The blueprint says "must have a sound" but does not specify which sound
+    Dog fills in the actual sound
+
+
+--------------------------------------------------------------------------------
+7. VIRTUAL VS PURE VIRTUAL - WHEN TO USE WHICH
+--------------------------------------------------------------------------------
+
+virtual (with body):
+    virtual void makeSound() { std::cout << "..." << std::endl; }
+    
+    - base class has a default behavior
+    - derived classes CAN override but do not have to
+    - base class itself CAN be instantiated
+
+pure virtual (= 0):
+    virtual void makeSound() = 0;
+    
+    - base class has NO default behavior
+    - derived classes MUST override
+    - base class CANNOT be instantiated (abstract)
+
+Use virtual when:
+    - there is a sensible default behavior for the base class
+    - derived classes might want to keep the default
+
+Use pure virtual when:
+    - there is no sensible default for the base class
+    - every derived class must define its own version
+    - you want to prevent creating the base class directly
+
+
+--------------------------------------------------------------------------------
+8. OVERRIDE KEYWORD (C++11)
+--------------------------------------------------------------------------------
+
+In C++11 and later, you can mark overriding functions with override:
+
+    class Dog : public Animal {
+    public:
+        void makeSound() override;   // tells compiler: this overrides a virtual
+    };
+
+Benefits:
+    - compiler error if you make a typo or wrong signature
+    - makes code clearer
+
+    class Dog : public Animal {
+        void makesound() override;   // ERROR - typo, no such virtual in Animal
+        void makeSound() const override;   // ERROR - const mismatch
+    };
+
+Without override you would not know about these mistakes until runtime.
+
+
+--------------------------------------------------------------------------------
+9. COMMON MISTAKES IN MODULE 04
+--------------------------------------------------------------------------------
+
+MISTAKE 1: Forgetting virtual in base class
+    class Animal {
+        void makeSound();   // NOT virtual
+    };
+    // Dog::makeSound() will never be called through Animal*
+
+MISTAKE 2: Forgetting virtual destructor
+    class Animal {
+        virtual void makeSound();
+        ~Animal();   // NOT virtual
+    };
+    // delete Animal* will not call derived destructor = memory leak
+
+MISTAKE 3: Const mismatch
+    class Animal {
+        virtual void makeSound() const;   // const
+    };
+    class Dog : public Animal {
+        void makeSound();   // NOT const - does not override, creates new function
+    };
+
+MISTAKE 4: Forgetting delete
+    Animal *a = new Dog();
+    // forgot delete a; = memory leak
+
+CORRECT PATTERN:
+    class Animal {
+    public:
+        virtual void makeSound() const = 0;   // pure virtual
+        virtual ~Animal();                     // virtual destructor
+    };
+
+    class Dog : public Animal {
+    public:
+        void makeSound() const override;   // override with same signature
+        ~Dog();
+    };
+
+    Animal *a = new Dog();
+    a->makeSound();   // calls Dog::makeSound()
+    delete a;         // calls Dog::~Dog() then Animal::~Animal()
+
+
+--------------------------------------------------------------------------------
+10. FULL EXAMPLE - PUTTING IT ALL TOGETHER
+--------------------------------------------------------------------------------
+
+    // Animal.hpp
+    class Animal {
+    protected:
+        std::string _type;
+    public:
+        Animal();
+        Animal(const Animal &other);
+        Animal &operator=(const Animal &other);
+        virtual ~Animal();                      // virtual destructor
+        virtual void makeSound() const = 0;    // pure virtual
+        std::string getType() const;
+    };
+
+    // Dog.hpp
+    class Dog : public Animal {
+    public:
+        Dog();
+        Dog(const Dog &other);
+        Dog &operator=(const Dog &other);
+        ~Dog();
+        void makeSound() const override;   // must implement pure virtual
+    };
+
+    // Dog.cpp
+    Dog::Dog() : Animal()
+    {
+        _type = "Dog";
+        std::cout << "Dog constructor called" << std::endl;
+    }
+
+    void Dog::makeSound() const
+    {
+        std::cout << "Woof!" << std::endl;
+    }
+
+    // main.cpp
+    Animal *animals[2];
+    animals[0] = new Dog();
+    animals[1] = new Cat();
+
+    animals[0]->makeSound();   // Woof!
+    animals[1]->makeSound();   // Meow!
+
+    delete animals[0];   // Dog destructor, then Animal destructor
+    delete animals[1];   // Cat destructor, then Animal destructor
+
+
+--------------------------------------------------------------------------------
+11. QUICK REFERENCE TABLE
+--------------------------------------------------------------------------------
+
+    Concept              | Keyword        | What it does
+    ---------------------|----------------|----------------------------------
+    Virtual function     | virtual        | derived class can override
+    Pure virtual         | virtual = 0    | derived class MUST override
+    Abstract class       | has = 0        | cannot be instantiated
+    Virtual destructor   | virtual ~      | correct cleanup with pointers
+    Override (C++11)     | override       | confirms overriding a virtual
+    Runtime dispatch     | (automatic)    | correct function called at runtime
+
+
+--------------------------------------------------------------------------------
+12. COMPILE TIME VS RUNTIME DISPATCH - SUMMARY
+--------------------------------------------------------------------------------
+
+Without virtual (compile time):
+    Animal *a = new Dog();
+    a->makeSound();   // decided at compile time based on pointer type
+                      // always calls Animal::makeSound()
+
+With virtual (runtime):
+    Animal *a = new Dog();
+    a->makeSound();   // decided at runtime based on actual object
+                      // calls Dog::makeSound()
+
+The difference:
+    compile time = C++ decides which function when you build the program
+    runtime      = C++ decides which function when the program actually runs
+
+================================================================================
+END OF NOTES
+================================================================================

@@ -1,0 +1,271 @@
+================================================================================
+CPP04 - PRACTICAL NOTES
+================================================================================
+
+
+--------------------------------------------------------------------------------
+1. PURE VIRTUAL AND ABSTRACT CLASSES
+--------------------------------------------------------------------------------
+
+A pure virtual function is a function with no body in the base class.
+It forces every derived class to implement it.
+
+    virtual void makeSound() const = 0;
+    //                             ^
+    //                             = 0 means no body, must be implemented
+
+WHY USE IT:
+    Imagine you are building a payment system:
+    - PaymentMethod is the base class
+    - CreditCard, PayPal, Bitcoin are derived classes
+    - Every payment method MUST have a processPayment() function
+    - But PaymentMethod itself has no sensible default payment logic
+
+    class PaymentMethod {
+    public:
+        virtual void processPayment() = 0;   // every payment must implement this
+    };
+
+    class CreditCard : public PaymentMethod {
+    public:
+        void processPayment() { /* charge the card */ }
+    };
+
+    class PayPal : public PaymentMethod {
+    public:
+        void processPayment() { /* send via paypal */ }
+    };
+
+    PaymentMethod p;   // ERROR - you cannot create a bare PaymentMethod
+    CreditCard c;      // OK - implements processPayment()
+
+ABSTRACT CLASS:
+    Any class with at least one pure virtual function is abstract.
+    It is a blueprint, not a real thing you can create.
+
+    Real life: a blueprint is abstract - you cannot live in a blueprint.
+    You live in the house built FROM the blueprint.
+
+RULE:
+    Use pure virtual when:
+    - there is no sensible default behavior for the base class
+    - every derived class must define its own version
+    - you never want to create the base class directly
+
+
+--------------------------------------------------------------------------------
+2. ARRAY OF POINTERS VS ARRAY OF VALUES
+--------------------------------------------------------------------------------
+
+Consider a game with different enemy types:
+
+    class Enemy {
+    public:
+        virtual void attack() { std::cout << "generic attack" << std::endl; }
+    };
+
+    class Zombie : public Enemy {
+    public:
+        void attack() { std::cout << "bite!" << std::endl; }
+    };
+
+    class Vampire : public Enemy {
+    public:
+        void attack() { std::cout << "drain blood!" << std::endl; }
+    };
+
+ARRAY OF VALUES (broken):
+    Enemy enemies[3];
+    enemies[0] = Zombie();    // Zombie gets SLICED into Enemy sized slot
+    enemies[0].attack();      // prints "generic attack" -- WRONG
+
+ARRAY OF POINTERS (correct):
+    Enemy *enemies[3];
+    enemies[0] = new Zombie();   // pointer just stores address of Zombie
+    enemies[0]->attack();        // prints "bite!" -- CORRECT
+
+WHY POINTERS WORK:
+    - Each slot in the array holds a MEMORY ADDRESS (8 bytes)
+    - The actual Zombie/Vampire objects live on the heap, full and intact
+    - virtual looks at what the pointer POINTS TO, not the pointer itself
+
+    enemies[0]  ->  [address: 0x1234]  ->  [full Zombie object on heap]
+    enemies[1]  ->  [address: 0x5678]  ->  [full Vampire object on heap]
+
+WHY VALUES DO NOT WORK:
+    - Each slot has fixed size = sizeof(Enemy)
+    - Zombie is bigger than Enemy (has extra data)
+    - When you copy Zombie into Enemy slot, the extra parts get cut off
+    - This is called object slicing (see section 3)
+
+
+--------------------------------------------------------------------------------
+3. OBJECT SLICING - WHY ARRAY OF VALUES BREAKS POLYMORPHISM
+--------------------------------------------------------------------------------
+
+Object slicing happens when a derived object is copied into a base-sized slot.
+The parts that do not fit get silently cut off.
+
+    class Shape {
+    public:
+        virtual float area() { return 0; }
+    };
+
+    class Circle : public Shape {
+        float radius;   // extra data, not in Shape
+    public:
+        float area() { return 3.14 * radius * radius; }
+    };
+
+    Shape s = Circle(5.0);   // Circle gets sliced into Shape
+    //  ^
+    //  Shape has no radius field
+    //  radius gets cut off
+    //  s is now just a Shape with no circle data
+    s.area();   // returns 0, not 78.5
+
+VISUALIZED:
+    Circle object in memory:
+    [Shape part: vtable ptr][Circle part: radius = 5.0]
+
+    After slicing into Shape:
+    [Shape part: vtable ptr][   cut off!   ]
+
+    The radius is gone. The circle data is lost.
+
+WHY POLYMORPHISM BREAKS:
+    After slicing, the object IS a Shape.
+    It is no longer a Circle pretending to be a Shape.
+    virtual has nothing to work with because the Circle data is gone.
+
+WITH POINTERS - NO SLICING:
+    Shape *s = new Circle(5.0);   // pointer stores address
+    //  Circle object on heap:
+    //  [Shape part: vtable ptr][Circle part: radius = 5.0]
+    //  nothing cut off, full Circle intact
+    s->area();   // returns 78.5, correct
+
+RULE:
+    Never store derived objects by value in a base class container.
+    Always use pointers or references when working with polymorphism.
+
+
+--------------------------------------------------------------------------------
+4. DEEP COPY VS SHALLOW COPY
+--------------------------------------------------------------------------------
+
+This matters any time your class has a POINTER member.
+
+SHALLOW COPY - copying the address (dangerous):
+    Imagine two people sharing the same house key:
+
+    class Person {
+        House *_house;   // pointer to a house
+    };
+
+    Person alice;        // alice has a house
+    Person bob(alice);   // SHALLOW: bob gets the same house address
+
+    // both alice and bob point to the SAME house
+    // if alice's destructor deletes the house:
+    delete alice._house;   // house destroyed
+    // bob._house now points to destroyed house = crash
+
+    In memory:
+    alice._house -> [0x1234] -> [House object]
+    bob._house   -> [0x1234] -> [same House object]  <- dangerous
+
+DEEP COPY - copying the contents (safe):
+    Each person gets their OWN house:
+
+    Person::Person(const Person &other)
+    {
+        _house = new House(*other._house);   // NEW house, copy contents
+    }
+
+    // now:
+    alice._house -> [0x1234] -> [House object A]
+    bob._house   -> [0x5678] -> [House object B]  <- separate, safe
+
+    // deleting alice does not affect bob at all
+
+HOW TO IMPLEMENT DEEP COPY:
+
+    // copy constructor - create new object, copy contents
+    Dog::Dog(const Dog &other) : Animal(other)
+    {
+        brain = new Brain(*other.brain);   // new Brain, copy contents
+    }
+
+    // assignment operator - copy into existing object
+    Dog &Dog::operator=(const Dog &other)
+    {
+        if (this != &other)
+        {
+            Animal::operator=(other);
+            *brain = *other.brain;   // copy Brain contents, not the pointer
+        }
+        return (*this);
+    }
+
+HOW TO TEST DEEP COPY:
+    Dog dog1;
+    Dog dog2(dog1);
+
+    // check brain addresses are different
+    std::cout << dog1.getBrain() << std::endl;   // 0x1234
+    std::cout << dog2.getBrain() << std::endl;   // 0x5678 (different)
+    // if same address = shallow copy = fail
+
+
+--------------------------------------------------------------------------------
+5. new Brain(*other.brain) SYNTAX EXPLAINED
+--------------------------------------------------------------------------------
+
+This looks confusing but it is just two things you already know combined.
+
+STEP BY STEP:
+
+    other.brain       // other is a Dog, brain is its Brain* member
+                      // this gives you the POINTER (memory address 0x1234)
+
+    *other.brain      // dereference the pointer
+                      // this gives you the actual BRAIN OBJECT at 0x1234
+                      // same as: int *p = &x; then *p gives you x
+
+    new Brain(...)    // create a new Brain on the heap
+                      // pass something to its constructor
+
+    new Brain(*other.brain)
+                      // create new Brain, pass the actual Brain object
+                      // Brain receives a Brain object = calls copy constructor
+                      // copy constructor copies all 100 ideas
+
+SAME PATTERN WITH SIMPLER TYPES:
+    int x = 5;
+    int *p = &x;
+
+    new int(*p)       // create new int, copy value from *p
+    //      ^
+    //      *p = 5, so this creates new int with value 5
+
+    new Brain(*other.brain)   // same idea, just with Brain instead of int
+    //        ^
+    //        *other.brain = the actual Brain object
+    //        so this creates new Brain copied from that object
+
+WHY NOT JUST:
+    brain = other.brain;         // copies the POINTER (shallow, dangerous)
+    brain = new Brain();         // creates empty Brain, loses all ideas
+    brain = new Brain(*other.brain);  // creates new Brain WITH all ideas copied
+
+THE DIFFERENCE:
+    other.brain        -> 0x1234 (just an address)
+    *other.brain       -> the actual Brain object at that address
+    new Brain(address) -> wrong, Brain constructor does not take an address
+    new Brain(object)  -> correct, Brain copy constructor takes a Brain object
+
+
+================================================================================
+END OF NOTES
+================================================================================
