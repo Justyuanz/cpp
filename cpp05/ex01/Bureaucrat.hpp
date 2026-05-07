@@ -8,7 +8,7 @@
 class Bureaucrat
 {
 private:
-	const std::string	_name; //A const member must be set at the moment of creation, cannot set it later.
+	const std::string	_name;
 	int					_grade;
 public:
 	// Orthodox Canonical Form
@@ -45,7 +45,6 @@ public:
 	};
 };
 
-//operator<< must be a free function, not a member: As a member function, the left side of << would have to be a Bureaucrat.
 std::ostream &operator<<(std::ostream &out, const Bureaucrat &b);
 
 #endif
