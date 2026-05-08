@@ -1,10 +1,10 @@
 #ifndef BUREAUCRAT_HPP
-#define BUREAUCRAT_HPP
+# define BUREAUCRAT_HPP
 
 #include <string>
 #include <iosfwd>
 #include <exception>
-
+#include "Form.hpp"
 class Bureaucrat
 {
 private:

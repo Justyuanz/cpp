@@ -1,10 +1,10 @@
-NAME = bureaucrat
+NAME = form
 
 CPP = c++
 CPPFLAGS = -Wall -Wextra -Werror -std=c++20 -MMD -MP
 
-SRCS = main.cpp Bureaucrat.cpp
-HEADERS = Bureaucrat.hpp
+SRCS = main.cpp Bureaucrat.cpp Form.cpp
+HEADERS = Bureaucrat.hpp Form.hpp
 OBJDIR = obj
 OBJS = $(SRCS:%.cpp=$(OBJDIR)/%.o)
 DEPS = $(OBJS:.o=.d)
