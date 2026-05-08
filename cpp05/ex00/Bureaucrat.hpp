@@ -11,6 +11,25 @@ private:
 	const std::string	_name; //A const member must be set at the moment of creation, cannot set it later.
 	int					_grade;
 public:
+	//exceptions,nested inside Bureaucrat — they belong to Bureaucrat, not standalone classes.
+	class GradeTooHighException: public std::exception
+	{
+	public:
+		const char* what() const noexcept
+		{
+			return "Bureaucrat:Grade too high";
+		}
+	};
+
+	class GradeTooLowException : public std::exception
+	{
+	public:
+		const char* what() const noexcept
+		{
+			return "Bureaucrat: Grade too low";
+		}
+	};
+
 	// Orthodox Canonical Form
 	Bureaucrat(const std::string &name, int grade);
 	Bureaucrat(const Bureaucrat &other);
@@ -24,25 +43,6 @@ public:
 	// actions
 	void incrementGrade();
 	void decrementGrade();
-
-	//exceptions,nested inside Bureaucrat — they belong to Bureaucrat, not standalone classes.
-	class GradeTooHighException: public std::exception
-	{
-	public:
-		const char* what() const noexcept
-		{
-			return "GradeTooHigh";
-		}
-	};
-
-	class GradeTooLowException : public std::exception
-	{
-	public:
-		const char* what() const noexcept
-		{
-			return "GradeTooLow";
-		}
-	};
 };
 
 //operator<< must be a free function, not a member: As a member function, the left side of << would have to be a Bureaucrat.
