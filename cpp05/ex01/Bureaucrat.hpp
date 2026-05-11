@@ -1,10 +1,10 @@
-#ifndef BUREAUCRAT_HPP
-# define BUREAUCRAT_HPP
+#pragma once
 
 #include <string>
 #include <iosfwd>
 #include <exception>
-#include "Form.hpp"
+
+class Form;
 class Bureaucrat
 {
 private:
@@ -24,6 +24,7 @@ public:
 	// actions
 	void incrementGrade();
 	void decrementGrade();
+	void signForm(Form &form);
 
 	//exceptions,nested inside Bureaucrat — they belong to Bureaucrat, not standalone classes.
 	class GradeTooHighException: public std::exception
@@ -46,5 +47,3 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &out, const Bureaucrat &b);
-
-#endif

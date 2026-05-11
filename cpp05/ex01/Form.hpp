@@ -1,8 +1,9 @@
 #pragma once
 
 #include <string>
-#include "Bureaucrat.hpp"
 
+class Bureaucrat;
+//Form is essentially a permission-controlled object
 class Form
 {
 private:
@@ -36,7 +37,7 @@ public:
 	~Form();
 
 	Form 				&operator=(const Form &other);
-	beSigned();
+	void				beSigned(Bureaucrat &b);
 	//getters
 	const std::string	&getName() const;
 	int					getGradeToSign() const;

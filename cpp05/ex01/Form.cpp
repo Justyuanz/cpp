@@ -1,4 +1,5 @@
 #include"Form.hpp"
+#include"Bureaucrat.hpp"
 #include<iostream>
 
 Form::Form(const std::string &name, int gradeToSign, int gradeToExecute):
@@ -6,6 +7,10 @@ _name(name),
 _gradeToSign(gradeToSign),
 _gradeToExecute(gradeToExecute)
 {
+	if (gradeToSign < 1 || gradeToExecute < 1)
+		throw GradeTooHighException();
+	if (gradeToSign > 150 || gradeToExecute > 150)
+		throw GradeTooLowException();
 	_isSigned = false;
 	std::cout << "Form default constructor called" << std::endl;
 }
@@ -49,6 +54,16 @@ int Form::getGradeToExecute() const
 bool Form::getIsSigned() const
 {
 	return _isSigned;
+}
+
+void Form::beSigned(Bureaucrat &b)
+{
+	if (b.getGrade() <= _gradeToSign)
+	{
+		_isSigned = true;
+		return ;
+	}
+	throw GradeTooLowException();
 }
 
 std::ostream &operator<<(std::ostream &out, const Form &f)
