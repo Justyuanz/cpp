@@ -11,6 +11,10 @@ private:
 	const int			_gradeToSign;
 	const int			_gradeToExecute;
 	bool				_isSigned;
+
+protected:
+	virtual void executeAction(const Bureaucrat &executor) const = 0;
+
 public:
 	//custom exception classes
 	class GradeTooHighException : public std::exception
@@ -31,14 +35,23 @@ public:
 		}
 	};
 
+	class NotSignedException : public std::exception
+	{
+	public:
+		const char* what() const noexcept
+		{
+			return "AForm: Not signed.";
+		}
+	};
+
 	//Pass or return by reference, const to protect the original Pass ore return by value, no const needed, it's already a copy.
 	AForm(const std::string &name, int gradeToSign, int gradeToExecute);
 	AForm(const AForm &other);
-	~AForm();
+	virtual ~AForm();
 
 	AForm 				&operator=(const AForm &other);
-	void		beSigned(Bureaucrat &b);
-	virtual void execute(Bureaucrat const & executor) const = 0;
+	void				beSigned(Bureaucrat &b);
+	void 				execute(Bureaucrat const & executor) const;
 	//getters
 	const std::string	&getName() const;
 	int					getGradeToSign() const;

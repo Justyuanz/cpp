@@ -1,5 +1,6 @@
 #include"AForm.hpp"
 #include"ShrubberyCreationForm.hpp"
+#include<fstream>
 #include<iostream>
 
 ShrubberyCreationForm::ShrubberyCreationForm(const std::string &target):
@@ -17,13 +18,19 @@ ShrubberyCreationForm::~ShrubberyCreationForm()
 {
 }
 
-void ShrubberyCreationForm::execute(Bureaucrat const & executor) const
+void ShrubberyCreationForm::executeAction(const Bureaucrat &executor) const
 {
-	/*
-	Creates a file <target>_shrubbery in the working directory
-	and writes ASCII trees inside it
-	*/
-
 	(void)executor;
-	std::cout << "execute override." << std::endl;
+	int	ivalue = 0;
+
+	try
+    {
+		std::ofstream	myFile(_target + "_shrubbery");
+		myFile.exceptions(std::ifstream::failbit);
+		myFile << ivalue; // may throw
+    }
+    catch (const std::ios_base::failure& fail)
+    {
+        std::cerr << fail.what() << '\n';
+    }
 }

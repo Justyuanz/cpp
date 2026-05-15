@@ -11,4 +11,6 @@ int main(void)
 	alice.signAForm(a);
 	std::cout << a << std::endl;
 	std::cout << b << std::endl;
+
+	a.execute(alice);
 }
