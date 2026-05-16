@@ -52,7 +52,7 @@ bool AForm::getIsSigned() const
 	return _isSigned;
 }
 
-void AForm::beSigned(Bureaucrat &b)
+void AForm::beSigned(const Bureaucrat &b)
 {
 	if (b.getGrade() <= _gradeToSign)
 	{
@@ -66,9 +66,9 @@ void AForm::execute(Bureaucrat const &executor) const
 {
 	if (!_isSigned)
 		throw NotSignedException();
-	if (executor.getGrade() < _gradeToExecute)
+	if (executor.getGrade() > _gradeToExecute)
 		throw GradeTooLowException();
-	executeAction(executor);
+	executeAction();
 }
 
 std::ostream &operator<<(std::ostream &out, const AForm &f)

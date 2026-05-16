@@ -25,6 +25,7 @@ public:
 	void incrementGrade();
 	void decrementGrade();
 	void signAForm(AForm &AForm);
+	void executeForm(AForm const &form) const;
 
 	//exceptions,nested inside Bureaucrat — they belong to Bureaucrat, not standalone classes.
 	class GradeTooHighException: public std::exception

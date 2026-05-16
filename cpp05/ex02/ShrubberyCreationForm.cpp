@@ -1,7 +1,6 @@
 #include"AForm.hpp"
 #include"ShrubberyCreationForm.hpp"
 #include<fstream>
-#include<iostream>
 
 ShrubberyCreationForm::ShrubberyCreationForm(const std::string &target):
 AForm("ShrubberyCreationForm", 145, 137),
@@ -18,19 +17,24 @@ ShrubberyCreationForm::~ShrubberyCreationForm()
 {
 }
 
-void ShrubberyCreationForm::executeAction(const Bureaucrat &executor) const
+void ShrubberyCreationForm::executeAction() const
 {
-	(void)executor;
-	int	ivalue = 0;
-
-	try
-    {
-		std::ofstream	myFile(_target + "_shrubbery");
-		myFile.exceptions(std::ifstream::failbit);
-		myFile << ivalue; // may throw
-    }
-    catch (const std::ios_base::failure& fail)
-    {
-        std::cerr << fail.what() << '\n';
-    }
+	//std::ofstream f("/no_such_dir/x_shrubbery");
+	std::ofstream	myFile(_target + "_shrubbery");
+	
+	if(!myFile.is_open())
+        throw std::ios_base::failure("ShrubberyCreationForm: cannot open file");
+	for (size_t i = 0; i < 3; i++)
+	{
+		myFile << "       _-_\n";
+		myFile << "    /~~   ~~\\\n";
+		myFile << " /~~         ~~\\\n";
+		myFile << "{               }\n";
+		myFile << " \\  _-     -_  /\n";
+		myFile << "   ~  \\\\ //  ~\n";
+		myFile << "_- -   | | _- _\n";
+		myFile << "  _ -  | |   -_\n";
+		myFile << "      // \\\\\n";
+		myFile << '\n';
+	}
 }

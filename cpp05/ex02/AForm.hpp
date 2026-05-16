@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <exception>
+#include <iosfwd>
 
 class Bureaucrat;
 //AForm is essentially a permission-controlled object
@@ -13,7 +15,7 @@ private:
 	bool				_isSigned;
 
 protected:
-	virtual void executeAction(const Bureaucrat &executor) const = 0;
+	virtual void executeAction() const = 0;
 
 public:
 	//custom exception classes
@@ -50,8 +52,8 @@ public:
 	virtual ~AForm();
 
 	AForm 				&operator=(const AForm &other);
-	void				beSigned(Bureaucrat &b);
-	void 				execute(Bureaucrat const & executor) const;
+	void				beSigned(const Bureaucrat &b);
+	void 				execute(const Bureaucrat & executor) const;
 	//getters
 	const std::string	&getName() const;
 	int					getGradeToSign() const;

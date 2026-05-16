@@ -8,7 +8,7 @@ private:
 	const	std::string	_target;
 
 protected:
-	void	executeAction(const Bureaucrat &executor) const override;
+	void	executeAction() const override;
 
 public:
 	ShrubberyCreationForm(const std::string &target);
