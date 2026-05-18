@@ -1,0 +1,354 @@
+================================================================
+CPP05 — KEY KNOWLEDGE NOTES
+================================================================
+
+----------------------------------------------------------------
+1. CONST MEMBERS AND COPY ASSIGNMENT
+----------------------------------------------------------------
+const members can only be set in the constructor initializer list.
+They cannot be reassigned after construction.
+
+    class Form {
+        const std::string _name;  // can never be reassigned
+    };
+
+If you have const members, copy assignment is impossible.
+Either remove const, or delete the operator:
+
+    Form &operator=(const Form &other) = delete;
+
+Rule: const members + copy assignment = does not work.
+
+----------------------------------------------------------------
+2. CONST ON REFERENCES VS VALUES
+----------------------------------------------------------------
+Pass/return by REFERENCE → need const to protect the original:
+
+    const std::string &getName() const;  // const needed, returns internal ref
+    void foo(const std::string &name);   // const needed, ref to caller's string
+
+Pass/return by VALUE → already a copy, const is pointless:
+
+    int getGrade() const;        // no const on return, it is a copy
+    void foo(int grade);         // no const on param, it is a copy
+
+Rule: reference → const to protect. value → no const needed.
+
+----------------------------------------------------------------
+3. PUBLIC BEFORE PRIVATE
+----------------------------------------------------------------
+Convention: public interface first, private implementation last.
+Readers see what matters without scrolling past internals.
+
+    class Form {
+    public:
+        // interface — what others use
+    private:
+        // implementation — nobody else's business
+    };
+
+----------------------------------------------------------------
+4. FORWARD DECLARATION VS INCLUDE
+----------------------------------------------------------------
+Use forward declaration in .hpp when you only use a reference/pointer:
+
+    class Bureaucrat;  // just tells compiler "this exists"
+    void beSigned(const Bureaucrat &b);  // only a reference, no methods called
+
+Use #include in .cpp where you actually call methods:
+
+    #include "Bureaucrat.hpp"  // need full class to call getGrade()
+
+Why: avoids circular includes. Form.hpp includes Bureaucrat.hpp,
+Bureaucrat.hpp includes Form.hpp = circular = compile error.
+
+Rule:
+    .hpp → forward declare when only pointer/reference
+    .cpp → #include where you use the methods
+
+----------------------------------------------------------------
+5. CIRCULAR INCLUDE PROBLEM
+----------------------------------------------------------------
+Form.hpp includes Bureaucrat.hpp
+Bureaucrat.hpp includes Form.hpp
+→ each file tries to include the other = "unknown type name" error
+
+Fix: forward declare in one of the headers, include in the .cpp.
+
+----------------------------------------------------------------
+6. UNDEFINED REFERENCE (LINKER ERROR)
+----------------------------------------------------------------
+Error: undefined reference to operator<<
+Means: declared but never defined, or not compiled/linked.
+
+Always means one of:
+- you declared something but forgot to implement it
+- you forgot to add the .cpp to your Makefile
+
+----------------------------------------------------------------
+7. OPERATOR<< FOR CLASSES
+----------------------------------------------------------------
+Must be a free function, not a member:
+
+    std::ostream &operator<<(std::ostream &out, const Form &f)
+    {
+        out << f.getName();
+        return out;
+    }
+
+ostream cannot be const — writing to it modifies its internal state.
+
+----------------------------------------------------------------
+8. EXCEPTIONS
+----------------------------------------------------------------
+Three parts: define, throw, catch.
+
+DEFINE your own:
+    class GradeTooLowException : public std::exception {
+    public:
+        const char *what() const noexcept override {
+            return "Grade too low";
+        }
+    };
+
+THROW it:
+    throw GradeTooLowException();
+    throw std::runtime_error("message");  // standard, needs <stdexcept>
+
+CATCH it:
+    try {
+        form.beSigned(bureaucrat);
+    }
+    catch (std::exception &e) {  // catch base class = catches everything
+        std::cerr << e.what() << std::endl;
+    }
+
+Catch base class std::exception to handle all exception types at once.
+
+----------------------------------------------------------------
+9. ABSTRACT CLASS AND PURE VIRTUAL
+----------------------------------------------------------------
+Pure virtual function = must be overridden in derived class:
+
+    virtual void executeAction() const = 0;  // = 0 makes it pure virtual
+
+A class with any pure virtual function is abstract:
+- cannot instantiate it directly
+- derived classes MUST implement all pure virtual functions
+
+    AForm *f = new AForm(...);           // ERROR — abstract
+    AForm *f = new ShrubberyCreationForm(...);  // OK — concrete derived
+
+----------------------------------------------------------------
+10. TEMPLATE METHOD PATTERN
+----------------------------------------------------------------
+Base class defines the skeleton (order of steps).
+Derived class fills in the unique step.
+
+    // AForm — controls the flow
+    void AForm::execute(const Bureaucrat &executor) const
+    {
+        if (!_isSigned) throw NotSignedException();
+        if (executor.getGrade() > _gradeToExecute) throw GradeTooLowException();
+        executeAction();  // calls derived implementation
+    }
+
+    // ShrubberyCreationForm — only the unique part
+    void ShrubberyCreationForm::executeAction() const
+    {
+        std::ofstream file(_target + "_shrubbery");
+        file << "   ###   \n";
+    }
+
+Why: write grade checks once in base. Every derived class gets them free.
+If you change the check logic, change it in one place only.
+
+----------------------------------------------------------------
+11. FILE HANDLING WITH OFSTREAM
+----------------------------------------------------------------
+#include <fstream>
+
+Basic usage:
+    std::ofstream file("filename.txt");  // creates or overwrites
+    if (!file.is_open())
+        throw std::runtime_error("Could not open file");
+    file << "hello\n";
+    // auto closes when file goes out of scope (RAII)
+
+File modes:
+    std::ios::trunc  — overwrite from start (default)
+    std::ios::app    — append to end
+
+ofstream does NOT throw by default on failure.
+Always check is_open() after opening.
+
+ofstream can CREATE files but NOT directories.
+Writing to a non-existent directory will fail.
+
+----------------------------------------------------------------
+12. RAND AND SRAND — RANDOM NUMBERS
+----------------------------------------------------------------
+rand() generates a predictable sequence from a seed.
+Same seed = same sequence every run.
+
+srand() sets the seed. Use current time so it differs each run:
+
+    std::srand(std::time(nullptr));  // seed with current time
+    if (std::rand() % 2)             // 50/50 coin flip
+        // success
+    else
+        // failure
+
+Without srand: same result every run.
+With srand(time): different result every run.
+
+Needs: #include <cstdlib> for rand/srand
+       #include <ctime>   for time
+
+----------------------------------------------------------------
+13. THIS POINTER
+----------------------------------------------------------------
+Inside a member function, 'this' is a pointer to the current object:
+
+    this       →  Bureaucrat*  (pointer)
+    *this      →  Bureaucrat&  (the actual object)
+
+Used when passing the current object to another function:
+
+    void Bureaucrat::signForm(Form &form)
+    {
+        form.beSigned(*this);  // pass this bureaucrat object to beSigned
+    }
+
+beSigned() expects a Bureaucrat& (reference), not a pointer.
+So *this dereferences the pointer to give the actual object.
+
+----------------------------------------------------------------
+14. = DEFAULT AND = DELETE
+----------------------------------------------------------------
+= default: let compiler generate the standard version
+
+    Intern() = default;                           // empty constructor
+    Intern(const Intern &other) = default;        // standard copy
+    ~Intern() = default;                          // empty destructor
+
+= delete: explicitly disable a function
+
+    Form &operator=(const Form &other) = delete;  // cannot assign
+
+Use = default when the class has no members (like Intern).
+Use = delete when an operation should never be allowed.
+
+----------------------------------------------------------------
+15. STATIC FREE FUNCTIONS IN .CPP FILES
+----------------------------------------------------------------
+static on a free function = private to that file:
+
+    // Intern.cpp
+    static AForm *createShrubbery(const std::string &t) {
+        return new ShrubberyCreationForm(t);
+    }
+
+Nobody outside Intern.cpp can see or call this.
+Same idea as private in a class — hide implementation details.
+
+Rule: helper function only used in one .cpp → mark it static.
+
+----------------------------------------------------------------
+16. FUNCTION POINTERS
+----------------------------------------------------------------
+A function name without () is a pointer to that function:
+
+    createShrubbery          // pointer to function, no call
+    createShrubbery(target)  // () = call it now
+
+Declaring a function pointer:
+
+    AForm *(*f)(const std::string &);  // f points to a function
+                                       // that takes string, returns AForm*
+
+Array of function pointers:
+
+    AForm *(*creators[])(const std::string &) = {
+        createShrubbery,   // creators[0]
+        createRobotomy,    // creators[1]
+        createPardon       // creators[2]
+    };
+
+    creators[i](target);   // calls the function at index i
+
+Read the declaration:
+    AForm *          → returns AForm*
+    (*creators[])    → array of pointers
+    (const std::string &) → each function takes a string
+
+----------------------------------------------------------------
+17. LOOKUP TABLE PATTERN (INTERN / MAKEFORM)
+----------------------------------------------------------------
+Instead of if/else chains, use parallel arrays + a loop:
+
+    const std::string names[] = {
+        "shrubbery creation",
+        "robotomy request",
+        "presidential pardon"
+    };
+    AForm *(*creators[])(const std::string &) = {
+        createShrubbery,
+        createRobotomy,
+        createPardon
+    };
+
+    for (int i = 0; i < 3; i++) {
+        if (names[i] == name) {
+            std::cout << "Intern creates " << name << std::endl;
+            return creators[i](target);
+        }
+    }
+    throw std::runtime_error("Form '" + name + "' does not exist");
+
+names[0] matches creators[0], names[1] matches creators[1], etc.
+Only creates the one form you need — no memory waste.
+
+----------------------------------------------------------------
+18. ARRAY SIZE
+----------------------------------------------------------------
+forms->length() = length of first STRING in the array (not array size!)
+sizeof(arr) / sizeof(arr[0]) = number of elements in the array
+
+    std::string forms[] = {"shrubbery creation", "robotomy request"};
+    forms->length()                    // 18 (length of "shrubbery creation")
+    sizeof(forms) / sizeof(forms[0])   // 2  (number of elements)
+
+----------------------------------------------------------------
+19. VIRTUAL DESTRUCTOR
+----------------------------------------------------------------
+Always make the destructor virtual in a base class:
+
+    virtual ~AForm() = default;
+
+Without virtual: deleting a derived object through a base pointer
+only calls the base destructor → memory leak.
+
+    AForm *f = new ShrubberyCreationForm("home");
+    delete f;  // without virtual ~AForm, ShrubberyCreationForm destructor never called
+
+----------------------------------------------------------------
+20. GIT — REMOVE COMMITTED BINARY FILES
+----------------------------------------------------------------
+If you accidentally commit .o files or binaries:
+
+    git rm -r --cached cpp05/ex01/obj/ cpp05/ex01/form
+    git commit -m "FIX: Remove binary and object files"
+
+--cached = remove from git tracking but keep files on disk.
+
+Then add .gitignore:
+    obj/
+    *.o
+    *.d
+    form
+
+Never commit: obj/, .o, .d, compiled binaries.
+Only commit: .cpp, .hpp, Makefile.
+
+================================================================
