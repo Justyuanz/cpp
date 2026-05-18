@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <exception>
+#include <iosfwd>
 
 class Bureaucrat;
 //Form is essentially a permission-controlled object
