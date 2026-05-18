@@ -4,6 +4,7 @@
 #include"RobotomyRequestForm.hpp"
 #include"PresidentialPardonForm.hpp"
 #include<iostream>
+
 int main(void)
 {
 	Bureaucrat alice("Alice", 5);
@@ -74,4 +75,6 @@ int main(void)
 	{
 		std::cerr << e.what() << '\n';
 	}
+
+	
 }

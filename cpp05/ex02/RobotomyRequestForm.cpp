@@ -1,7 +1,7 @@
 #include"AForm.hpp"
 #include"RobotomyRequestForm.hpp"
 #include<iostream>
-#include<cstdlib>
+#include <ctime>
 
 RobotomyRequestForm::RobotomyRequestForm(const std::string &target):
 AForm("RobotomyRequestForm", 72, 45),
