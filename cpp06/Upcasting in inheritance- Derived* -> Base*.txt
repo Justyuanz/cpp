@@ -1,0 +1,487 @@
+C++ upcasting: Derived* -> Base*
+
+1. First understand inheritance
+
+class Base {};
+class Derived : public Base {};
+
+This means:
+
+Derived is a kind of Base.
+
+Example in real life:
+
+Animal = Base
+Cat    = Derived
+
+A cat is an animal.
+So if I have a Cat, I can also treat it as an Animal.
+
+Same idea:
+
+Derived is a Base.
+So if I have a Derived object, I can also treat it as a Base object.
+
+
+2. What is inside a Derived object?
+
+class Base
+{
+public:
+    int baseValue;
+};
+
+class Derived : public Base
+{
+public:
+    int derivedValue;
+};
+
+Because Derived inherits from Base, a Derived object contains two parts:
+
++----------------------+
+| Base part            |
+| - baseValue          |
++----------------------+
+| Derived extra part   |
+| - derivedValue       |
++----------------------+
+
+So a Derived object has:
+- everything from Base
+- plus its own extra things
+
+
+3. Example
+
+Derived d;
+
+This creates one Derived object.
+
+Memory idea:
+
+d:
++----------------------+
+| Base part            |
++----------------------+
+| Derived extra part   |
++----------------------+
+
+Now:
+
+&d
+
+means: address of d
+
+The type of &d is:
+
+Derived*
+
+Because it points to a Derived object.
+
+
+4. Upcasting
+
+Base* b = static_cast<Base*>(&d);
+
+This means:
+
+Take the address of d, which is a Derived*,
+and convert it into a Base*.
+
+So:
+
+Derived*  ->  Base*
+
+This is called upcasting.
+
+It is called "up" because we go from child class to parent class:
+
+Derived child  ->  Base parent
+
+
+5. What really happens?
+
+Important:
+
+Base* b = static_cast<Base*>(&d);
+
+does NOT create a new object.
+does NOT copy d.
+does NOT destroy the Derived part.
+
+It only changes how we look at the same object.
+
+Before:
+
+Derived* sees the full object:
+
++----------------------+
+| Base part            |
++----------------------+
+| Derived extra part   |
++----------------------+
+
+After:
+
+Base* only sees the Base part:
+
++----------------------+
+| Base part            |
++----------------------+
+| Derived extra part   |  <- still exists, but Base* cannot access it
++----------------------+
+
+
+6. Why does the Derived extra part still exist?
+
+Because the real object is still a Derived object.
+
+This line:
+
+Base* b = static_cast<Base*>(&d);
+
+only creates another pointer/view to the same object.
+It does not change the object itself.
+
+The object d is still here:
+
+Derived d;
+
+So d still contains:
+- the Base part
+- the Derived extra part
+
+The cast only changes the pointer type:
+
+Derived*  ->  Base*
+
+It does not cut the object in half.
+It does not delete the derivedValue.
+It does not make a new smaller Base object.
+
+The Derived extra part still exists because the actual object in memory is still Derived.
+
+
+7. Why can Base* not access the Derived extra part?
+
+Because C++ checks what you are allowed to use from the pointer type.
+
+If the pointer type is Base*, C++ says:
+
+"I only know this pointer points to a Base.
+So I only allow you to use members that exist in Base."
+
+Example:
+
+class Base
+{
+public:
+    int baseValue;
+};
+
+class Derived : public Base
+{
+public:
+    int derivedValue;
+};
+
+Base has:
+- baseValue
+
+Base does NOT have:
+- derivedValue
+
+So if you write:
+
+Base* b = static_cast<Base*>(&d);
+
+Then b is a Base*.
+Through b, C++ only allows:
+
+b->baseValue;      // OK
+
+But this is not allowed:
+
+b->derivedValue;   // ERROR
+
+Why?
+
+Because Base* only promises:
+
+"This points to some Base object."
+
+It does not promise:
+
+"This points to a Derived object."
+
+Maybe the Base* points to a real Derived.
+Maybe it points to a real Base.
+Maybe it points to some other child class.
+
+C++ cannot allow Derived-only members through Base*, because not every Base object has those members.
+
+
+8. Why would we cast Derived* to Base*?
+
+Because sometimes we want to write code that works with many different child classes in a general way.
+
+Example:
+
+class Animal
+{
+public:
+    void eat()
+    {
+        std::cout << "Animal eats" << std::endl;
+    }
+};
+
+class Cat : public Animal
+{
+public:
+    void meow()
+    {
+        std::cout << "Meow" << std::endl;
+    }
+};
+
+class Dog : public Animal
+{
+public:
+    void bark()
+    {
+        std::cout << "Woof" << std::endl;
+    }
+};
+
+Cat c;
+Dog d;
+
+Animal* a1 = &c;
+Animal* a2 = &d;
+
+Now both Cat and Dog can be stored as Animal*.
+
+Why is this useful?
+
+Because I can write one function that accepts any Animal:
+
+void feedAnimal(Animal* animal)
+{
+    animal->eat();
+}
+
+Then I can call:
+
+feedAnimal(&c); // Cat is accepted because Cat is an Animal
+feedAnimal(&d); // Dog is accepted because Dog is an Animal
+
+Without upcasting, I would need separate functions:
+
+void feedCat(Cat* cat);
+void feedDog(Dog* dog);
+
+That becomes messy.
+
+Upcasting lets us write general code:
+
+Animal* animal
+
+instead of writing separate code for every child class.
+
+
+9. Another common reason: arrays/vectors of base pointers
+
+Imagine we have many different animal objects:
+
+Cat cat;
+Dog dog;
+
+Animal* animals[2];
+
+animals[0] = &cat;
+animals[1] = &dog;
+
+This works because:
+
+Cat* -> Animal*
+Dog* -> Animal*
+
+Now one array can store different child objects through base pointers.
+
+This is one of the main reasons inheritance is useful.
+
+
+10. Complete example
+
+#include <iostream>
+
+class Base
+{
+public:
+    int baseValue;
+};
+
+class Derived : public Base
+{
+public:
+    int derivedValue;
+};
+
+int main()
+{
+    Derived d;
+
+    d.baseValue = 10;
+    d.derivedValue = 20;
+
+    Base* b = static_cast<Base*>(&d);
+
+    std::cout << b->baseValue << std::endl; // OK
+
+    // std::cout << b->derivedValue << std::endl; // ERROR
+}
+
+Why is this line OK?
+
+std::cout << b->baseValue << std::endl;
+
+Because b is a Base*.
+Base has baseValue.
+So b is allowed to access baseValue.
+
+Why is this line wrong?
+
+std::cout << b->derivedValue << std::endl;
+
+Because b is a Base*.
+Base does not know derivedValue exists.
+
+Even though the real object is Derived,
+the pointer type is Base*,
+so C++ only lets you use the Base part.
+
+
+11. Very simple analogy
+
+Imagine this:
+
+class Person {};
+class Student : public Person {};
+
+A Student is a Person.
+
+Student s;
+
+Person* p = static_cast<Person*>(&s);
+
+This means:
+
+I have a student.
+Now I look at this student only as a person.
+
+The student is still a student.
+But through Person*, I can only use Person things.
+
+I cannot use Student-only things through Person*.
+
+Why would I do this?
+
+Because maybe I have a function:
+
+void printPersonInfo(Person* person);
+
+This function should work for:
+- Student
+- Teacher
+- Worker
+- any other kind of Person
+
+So we use Person* when we only need the Person part.
+
+
+12. Why is upcasting safe?
+
+Because every Derived object definitely has a Base part inside it.
+
+So this is safe:
+
+Derived* -> Base*
+
+Because:
+
+A Derived is always a Base.
+
+Like:
+
+A cat is always an animal.
+A student is always a person.
+A child class object is always also a parent class object.
+
+
+13. Do we always need static_cast for upcasting?
+
+Actually, no.
+
+This works too:
+
+Base* b = &d;
+
+C++ can do this automatically because it is safe.
+
+So these two are similar:
+
+Base* b = &d;
+
+Base* b = static_cast<Base*>(&d);
+
+But using static_cast makes the conversion explicit:
+
+"I know I am converting Derived* to Base*."
+
+
+14. The most important sentence
+
+Upcasting means:
+
+I have a child object,
+but I look at it through a parent pointer.
+
+The object stays the same.
+Only the pointer view becomes more limited.
+
+Base* b = static_cast<Base*>(&d);
+
+Does NOT mean:
+
+"turn Derived into Base"
+
+It means:
+
+"look at this Derived object through Base glasses"
+
+Same object.
+Smaller view.
+
+
+15. The shortest answer to "why use Base*?"
+
+Use Base* when you only need the common parent behavior,
+and you want the same code to work for many different child classes.
+
+Example:
+
+Animal* can point to Cat, Dog, Bird, etc.
+
+This lets us write one general function:
+
+void makeAnimalEat(Animal* animal);
+
+instead of many separate functions:
+
+void makeCatEat(Cat* cat);
+void makeDogEat(Dog* dog);
+void makeBirdEat(Bird* bird);
+
+That is the main reason.

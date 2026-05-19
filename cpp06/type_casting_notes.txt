@@ -1,0 +1,404 @@
+CPP06 TYPE CASTING NOTES - KID VERSION
+======================================
+
+0. What is type casting?
+------------------------
+A type is the "kind" of a value.
+
+Examples:
+    int       -> whole number
+    double    -> decimal number
+    char      -> one character
+    std::string -> text
+    Base*     -> pointer to a Base object
+
+Casting means:
+    "Please treat this value as another type."
+
+Example:
+    int x = 65;
+    char c = static_cast<char>(x);
+
+Here, 65 becomes the character 'A'.
+
+
+1. Implicit / automatic conversion
+----------------------------------
+This is when the compiler changes the type for you.
+You did not write a cast yourself.
+
+Example:
+    int a = 10;
+    double b = a;
+
+The compiler automatically changes int -> double.
+This is usually safe because double can store 10.
+
+Another example:
+    int a = 10;
+    char b = 'A';
+    int c = a + b;
+
+char 'A' can be converted to its ASCII number, 65.
+So the expression becomes:
+    int c = 10 + 65;
+
+Important idea:
+    When different types appear in one expression,
+    C++ may promote the smaller type to a bigger/common type.
+
+Common promotions:
+    bool -> char -> short -> int -> unsigned int -> long -> long long -> float -> double -> long double
+
+Be careful:
+    Automatic conversion can lose information.
+
+Example:
+    double d = 3.14;
+    int x = d;
+
+Now x is 3.
+The .14 part is lost.
+
+Another dangerous example:
+    int x = 300;
+    char c = x;
+
+A char may not be able to store 300.
+The result can be strange.
+
+When to use implicit conversion:
+    - When it is obvious and safe.
+    - int -> double is usually fine.
+
+When not to rely on it:
+    - When information can be lost.
+    - double -> int
+    - big number -> smaller type
+    - signed -> unsigned
+
+
+2. static_cast
+--------------
+Syntax:
+    static_cast<new_type>(expression)
+
+static_cast is the normal, clean C++ cast.
+It happens at compile time.
+
+Kid version:
+    "Compiler, I know this value can reasonably become this other type. Please convert it."
+
+Example:
+    double d = 3.14;
+    int x = static_cast<int>(d);
+
+Result:
+    x == 3
+
+This is allowed, but you should know that .14 is lost.
+
+Example:
+    int n = 65;
+    char c = static_cast<char>(n);
+
+Result:
+    c == 'A'
+
+Example with class pointers:
+    class Base {};
+    class Derived : public Base {};
+
+    Derived d;
+    Base* b = static_cast<Base*>(&d);
+
+This is upcasting: Derived* -> Base*.
+This is usually safe because a Derived is also a Base.
+
+When to use static_cast:
+    - Number conversions: int <-> double, char <-> int
+    - Upcasting in inheritance: Derived* -> Base*
+    - When you want to make a conversion explicit/readable
+
+When not to use static_cast:
+    - To remove const. Use const_cast for that.
+    - To check real object type at runtime. Use dynamic_cast for that.
+    - To force unrelated pointer types. Use reinterpret_cast only if you really know why.
+
+Important:
+    static_cast does NOT check at runtime whether an object is really the type you want.
+
+
+3. dynamic_cast
+---------------
+Syntax:
+    dynamic_cast<new_type>(expression)
+
+This cast is for polymorphic classes.
+Polymorphic means:
+    The base class has at least one virtual function.
+Usually it has a virtual destructor.
+
+Example:
+    class Base
+    {
+    public:
+        virtual ~Base() {}
+    };
+
+    class A : public Base {};
+    class B : public Base {};
+
+Kid version:
+    "At runtime, check what this object really is. If it is this type, give it to me. If not, fail safely."
+
+Example with pointer:
+    Base* p = new A;
+
+    A* a = dynamic_cast<A*>(p);
+    B* b = dynamic_cast<B*>(p);
+
+Result:
+    a is not NULL, because p really points to an A.
+    b is NULL, because p does not point to a B.
+
+Failure rules:
+    dynamic_cast<SomeType*>(ptr)
+        -> returns NULL if it fails
+
+    dynamic_cast<SomeType&>(ref)
+        -> throws std::bad_cast if it fails
+
+Example with reference:
+    Base& ref = *p;
+
+    try
+    {
+        A& a_ref = dynamic_cast<A&>(ref);
+    }
+    catch (std::bad_cast& e)
+    {
+        std::cout << "Wrong type" << std::endl;
+    }
+
+When to use dynamic_cast:
+    - You have a Base pointer/reference.
+    - You need to know whether the real object is A, B, C, etc.
+    - The base class is polymorphic.
+    - CPP06 ex02 commonly uses this idea.
+
+When not to use dynamic_cast:
+    - For normal number conversions.
+    - If your base class has no virtual function.
+    - If good design can avoid checking types manually.
+
+Very important:
+    dynamic_cast only works properly with polymorphic classes.
+    So your base class needs something like:
+
+    virtual ~Base() {}
+
+
+4. const_cast
+-------------
+Syntax:
+    const_cast<new_type>(expression)
+
+const_cast is used to remove or add const.
+Most commonly, it removes const.
+
+Kid version:
+    "This thing was protected from changes. I want to remove that protection."
+
+Example:
+    const int x = 10;
+    const int* p = &x;
+
+    int* q = const_cast<int*>(p);
+
+Now q is an int* instead of const int*.
+
+BUT BE CAREFUL.
+If the original object was truly const, changing it is undefined behavior.
+
+Bad example:
+    const int x = 10;
+    int* p = const_cast<int*>(&x);
+    *p = 20; // BAD: undefined behavior
+
+Less bad example:
+    int x = 10;
+    const int* p = &x;
+    int* q = const_cast<int*>(p);
+    *q = 20; // OK, because original x was not actually const
+
+When to use const_cast:
+    - Rarely.
+    - Mostly when old C-style APIs forgot to write const correctly.
+    - When you know the original object is not truly const.
+
+When not to use const_cast:
+    - Do not use it to "cheat" const correctness.
+    - Do not modify something that was originally declared const.
+    - Do not use it because you are confused. Fix your function signatures instead.
+
+Good habit:
+    If you feel you need const_cast, stop and ask:
+    "Why is this const? Should I change my function instead?"
+
+
+5. reinterpret_cast
+-------------------
+Syntax:
+    reinterpret_cast<new_type>(expression)
+
+This is the most dangerous cast.
+
+Kid version:
+    "Take these raw bits and pretend they are something totally different."
+
+Example:
+    int x = 42;
+    void* p = reinterpret_cast<void*>(&x);
+
+Another example:
+    uintptr_t raw = reinterpret_cast<uintptr_t>(&x);
+
+This converts a pointer into an integer type that can store an address.
+
+reinterpret_cast does not really convert the object meaningfully.
+It mostly changes how the same memory/address is viewed.
+
+When to use reinterpret_cast:
+    - Very low-level code.
+    - Pointer <-> integer address conversions.
+    - Serialization, memory inspection, hardware, system programming.
+    - CPP06 ex01 often uses it with uintptr_t.
+
+When not to use reinterpret_cast:
+    - Almost always.
+    - Not for normal class inheritance.
+    - Not for normal number conversion.
+    - Not because static_cast gives an error.
+
+Danger:
+    The compiler may allow it, but your program may become nonsense or unsafe.
+
+Example:
+    int x = 42;
+    double* p = reinterpret_cast<double*>(&x);
+
+This compiles, but reading *p is meaningless and dangerous.
+
+
+6. C-style cast: (type)value
+---------------------------
+Old C-style syntax:
+    int x = (int)3.14;
+
+C++ also allows it, but you should avoid it in C++ projects.
+
+Why?
+    Because it is not clear what kind of cast is happening.
+    It might behave like static_cast.
+    It might behave like const_cast.
+    It might behave like reinterpret_cast.
+
+C++ style is clearer:
+    int x = static_cast<int>(3.14);
+
+In 42 C++ modules, prefer C++ casts.
+
+
+7. Quick comparison table
+-------------------------
+
+implicit conversion:
+    Who does it? Compiler automatically.
+    Safe? Sometimes.
+    Use for: obvious safe conversions.
+    Example: double d = 10;
+
+static_cast:
+    Who does it? You write it explicitly.
+    Safe? Usually reasonable, but can lose data.
+    Use for: normal conversions.
+    Example: int x = static_cast<int>(3.14);
+
+dynamic_cast:
+    Who does it? Runtime check.
+    Safe? Yes, for polymorphic class type checking.
+    Use for: Base* -> Derived* when you need to check the real type.
+    Example: A* a = dynamic_cast<A*>(base_ptr);
+
+const_cast:
+    Who does it? You remove/add const.
+    Safe? Often dangerous.
+    Use for: rare const-correctness/API situations.
+    Example: int* p = const_cast<int*>(const_ptr);
+
+reinterpret_cast:
+    Who does it? You force raw memory/address interpretation.
+    Safe? Dangerous.
+    Use for: low-level pointer/address work.
+    Example: uintptr_t n = reinterpret_cast<uintptr_t>(ptr);
+
+
+9. Very simple rule list
+------------------------
+Ask yourself:
+
+1. Is it a normal number/char conversion?
+       Use static_cast.
+
+2. Is it Base* / Base& and I need to know the real derived type?
+       Use dynamic_cast.
+
+3. Am I removing const?
+       Use const_cast, but be very careful.
+
+4. Am I converting pointer/address/raw memory?
+       Use reinterpret_cast, but be very careful.
+
+5. Did the compiler do it automatically?
+       That is implicit conversion.
+       Check if information can be lost.
+
+6. Am I using (type)value?
+       Avoid it in C++.
+       Use one of the named casts instead.
+
+
+10. Tiny examples to remember
+-----------------------------
+
+static_cast:
+    double d = 42.9;
+    int i = static_cast<int>(d); // i becomes 42
+
+
+dynamic_cast:
+    Base* p = new A;
+    A* a = dynamic_cast<A*>(p); // success
+    B* b = dynamic_cast<B*>(p); // NULL
+
+
+const_cast:
+    const int* p = something;
+    int* q = const_cast<int*>(p); // removes const
+
+
+reinterpret_cast:
+    Data* ptr = new Data;
+    uintptr_t raw = reinterpret_cast<uintptr_t>(ptr);
+    Data* back = reinterpret_cast<Data*>(raw);
+
+
+11. Best beginner advice
+------------------------
+Use static_cast most of the time for normal conversions.
+Use dynamic_cast only for polymorphic class type checking.
+Avoid const_cast unless you really understand why.
+Avoid reinterpret_cast unless the exercise specifically wants pointer/address conversion.
+Avoid C-style casts in C++.
+
