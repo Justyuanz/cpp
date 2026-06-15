@@ -1,4 +1,5 @@
 #include"Array.hpp"
+#include <stdexcept>
 
 //Array<T> NOW it's a concrete class (where T is the template parameter)
 template <typename T>

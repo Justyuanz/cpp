@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdexcept>
-
 //Array is NOT a class yet, it's a blueprint for making classes
 template <typename T>
 class Array
