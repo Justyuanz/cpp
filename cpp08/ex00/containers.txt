@@ -1,0 +1,23 @@
+Sequence Containers
+Array:Container that wraps over fixed size static array.
+Vector: Automatically resizable dynamic array.
+Deque: Dynamic array of fixed-size arrays that allows fast insertions and deletions at both ends.
+List: Implementation of Doubly Linked List data structure.
+Forward List: Implementation of Singly Linked List data structure.
+
+Associative Containers
+Set: Collection of unique elements sorted on the basis of their values.
+Map: Collection of key-value pairs sorted on the basis of the keys where no two pairs have same keys.
+Multiset: Collection of elements sorted on the basis of their values but allows multiple copies of values.
+Multimap:Collection of key-value pairs sorted on the basis of the keys where multiple pairs can have same keys.
+
+Unordered Associative Containers
+Unordered Set: Collection of unique elements hashed by their values.
+Unordered Map: Collection of key-value pairs that are hashed by their keys where no two pairs have same keys.
+Unordered Multiset: Collection of elements hashed by their values and allows multiple copies of values.
+Unordered Multimap: Collection of key-value pairs that are hashed by their keys where multiple pairs can have same keys.
+
+Container Adapters
+Stack: Adapts a container to provide stack (LIFO) data structure.
+Queue: Adapts a container to provide queue (FIFO) data structure.
+Priority Queue: Adapts a container to provide heap data structure.
