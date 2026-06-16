@@ -2,6 +2,8 @@
 #include<iostream>
 #include<vector>
 #include<list>
+#include<deque>
+#include<forward_list>
 
 template <typename T>
 void test_easyfind(T& container, int num)
@@ -38,5 +40,11 @@ int main(void)
 		std::deque<int> de = {0, 1, 2, 3, 4};
 		test_easyfind(de, 0);
 		test_easyfind(de, 99);
+	}
+	{
+		std::cout << "--------------test forward list-------------" << std::endl;
+		std::forward_list<int> f_list = {0, 1, 2, 3, 4};
+		test_easyfind(f_list, 0);
+		test_easyfind(f_list, 99);
 	}
 }
