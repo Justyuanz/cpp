@@ -33,7 +33,8 @@ public:
 		}
 	};
 
-	//Pass or return by reference, const to protect the original Pass ore return by value, no const needed, it's already a copy.
+	//Pass or return by reference, const to protect the original 
+	//Pass or return by value, no const needed, it's already a copy.
 	Form(const std::string &name, int gradeToSign, int gradeToExecute);
 	Form(const Form &other);
 	~Form();

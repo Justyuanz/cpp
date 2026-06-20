@@ -24,7 +24,7 @@ clean:
 	rm -rf $(OBJDIR)
 
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(NAME) garden_shrubbery
 
 re: fclean all
 

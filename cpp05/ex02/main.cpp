@@ -15,11 +15,16 @@ int main(void)
 	PresidentialPardonForm d("PresidentialPardonForm");
 	ShrubberyCreationForm unsignedForm("unsigned_test");
 
-
+	std::cout << "------- print check--------" << std::endl;
+	std::cout << alice << std::endl;
+	std::cout << bob << std::endl;
 	std::cout << a << std::endl;
 	std::cout << b << std::endl;
-	
-	alice.signAForm(a);
+	std::cout << c << std::endl;
+	std::cout << d << std::endl;
+
+	std::cout << "------- shrubbery sign / execute--------" << std::endl;
+	alice.signAForm(a); //ShrubberyCreationForm
 	try
 	{
 		alice.executeForm(a);
@@ -29,6 +34,7 @@ int main(void)
 		std::cerr << e.what() << '\n';
 	}
 
+	std::cout << "------- robotomy sign / execute--------" << std::endl;
 	alice.signAForm(c);
 	try
 	{
@@ -39,6 +45,7 @@ int main(void)
 		std::cerr << e.what() << '\n';
 	}
 
+	std::cout <<  "------- pardon sign / execute--------" << std::endl;
 	alice.signAForm(d);
 	try
 	{
@@ -49,6 +56,7 @@ int main(void)
 		std::cerr << e.what() << '\n';
 	}
 
+	std::cout << "------- unsigned form execute--------" << std::endl;
 	try
 	{
 		alice.executeForm(unsignedForm);
@@ -58,6 +66,7 @@ int main(void)
 		std::cerr << e.what() << '\n';
 	}
 
+	std::cout << "------- low grade execute check--------" << std::endl;
 	try
 	{
 		bob.executeForm(a);
@@ -67,6 +76,7 @@ int main(void)
 		std::cerr << e.what() << '\n';
 	}
 	 
+	std::cout << "------- low grade bureaucrat checks--------" << std::endl;
 	try
   	{
 		bob.signAForm(d); // d needs sign grade 25, bob is 150
@@ -76,5 +86,5 @@ int main(void)
 		std::cerr << e.what() << '\n';
 	}
 
-	
+	return 0;
 }

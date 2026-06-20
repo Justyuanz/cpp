@@ -12,5 +12,5 @@ public:
 	Intern &operator=(const Intern &other) = default;
 	~Intern() = default;
 
-	AForm *makeForm(const std::string &formName, const std::string &formTarget) const;
+	AForm *makeForm(const std::string &formName, const std::string &formTarget) const; //const at the end means it does not modify the Intern object
 };

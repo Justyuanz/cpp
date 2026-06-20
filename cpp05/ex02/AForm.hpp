@@ -5,7 +5,6 @@
 #include <iosfwd>
 
 class Bureaucrat;
-//AForm is essentially a permission-controlled object
 class AForm
 {
 private:
@@ -15,6 +14,7 @@ private:
 	bool				_isSigned;
 
 protected:
+	// Protected so derived forms can implement the action without exposing it publicly.
 	virtual void executeAction() const = 0;
 
 public:
@@ -46,7 +46,8 @@ public:
 		}
 	};
 
-	//Pass or return by reference, const to protect the original Pass ore return by value, no const needed, it's already a copy.
+	//Pass or return by reference, const to protect the original
+	//Pass or return by value, no const needed, it's already a copy.
 	AForm(const std::string &name, int gradeToSign, int gradeToExecute);
 	AForm(const AForm &other);
 	virtual ~AForm();

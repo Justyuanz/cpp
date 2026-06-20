@@ -1,0 +1,643 @@
+C++ NOTES: FUNCTION POINTER ARRAY
+Topic: AForm *(*creators[])(const std::string &)
+Main difficult part: *creators[], (*creators[]), and the mental model of *(creators[])
+
+============================================================
+0. BIG PICTURE
+============================================================
+
+Original line:
+
+	AForm *(*creators[])(const std::string &t) =
+	{
+		createShrubbery,
+		createRobotomy,
+		createPardon
+	};
+
+This line creates an array called creators.
+
+Each element inside creators is a function pointer.
+
+Each function pointer points to a function that:
+
+	1. takes const std::string &
+	2. returns AForm *
+
+Example:
+
+	creators[0] = createShrubbery
+	creators[1] = createRobotomy
+	creators[2] = createPardon
+
+
+Then:
+
+	creators[i](formTarget)
+
+means:
+
+	call the function stored at creators[i]
+
+
+============================================================
+1. WHY THIS LINE EXISTS
+============================================================
+
+You have names:
+
+	std::string forms[] =
+	{
+		"shrubbery creation",
+		"robotomy request",
+		"presidential pardon"
+	};
+
+And you have matching creator functions:
+
+	AForm *(*creators[])(const std::string &t) =
+	{
+		createShrubbery,
+		createRobotomy,
+		createPardon
+	};
+
+They match by index:
+
+	forms[0]    -> creators[0]
+	forms[1]    -> creators[1]
+	forms[2]    -> creators[2]
+
+============================================================
+2. FUNCTION NAME VS FUNCTION CALL
+============================================================
+
+in this array:
+
+	{
+		createShrubbery,
+		createRobotomy,
+		createPardon
+	};
+
+you are NOT calling the functions yet.
+
+You are only storing function addresses.
+
+
+Later:
+
+	creators[i](formTarget)
+
+actually calls one function.
+
+
+============================================================
+3. START WITH A NORMAL ARRAY OF POINTERS
+============================================================
+
+Before function pointers, understand a normal pointer array.
+
+Example:
+
+	int *arr[3];
+
+Read from the variable name:
+
+	arr
+
+Look right:
+
+	arr[3]
+
+So:
+
+	arr is an array of 3 things
+
+Look left:
+
+	int *
+
+So:
+
+	each thing is an int pointer
+
+Meaning:
+
+	arr is an array of 3 int pointers
+
+
+Visual:
+
+	arr
+	+---------+---------+---------+
+	| int *   | int *   | int *   |
+	+---------+---------+---------+
+
+
+Example:
+
+	int a = 10;
+	int b = 20;
+	int c = 30;
+
+	int *arr[3] = { &a, &b, &c };
+
+Then:
+
+	arr[0] is &a
+	arr[1] is &b
+	arr[2] is &c
+
+
+Important:
+
+	int *arr[3];
+
+means:
+
+	arr is an array of pointers
+
+It does NOT mean:
+
+	arr is a pointer to an array
+
+
+Why?
+
+Because [] binds tighter than *.
+
+
+============================================================
+4. [] BINDS TIGHTER THAN *
+============================================================
+
+This is the core rule.
+
+In declarations:
+
+	[]
+
+has higher priority than:
+
+	*
+
+So:
+
+	*arr[]
+
+is understood as:
+
+	*(arr[])
+
+NOT:
+
+	(*arr)[]
+
+
+That means:
+
+	first, arr is an array
+	then, the elements are pointers
+
+
+So:
+
+	int *arr[3];
+
+means:
+
+	arr is an array of 3 int pointers
+
+
+If you wanted a pointer to an array, you would write:
+
+	int (*arr)[3];
+
+That means:
+
+	arr is a pointer to an array of 3 ints
+
+
+Compare:
+
+	int *arr[3];
+
+	arr is an array of int pointers
+
+	int (*arr)[3];
+
+	arr is a pointer to an array of ints
+
+
+The parentheses completely change the meaning.
+
+
+============================================================
+5. YOUR MISSING PART: *creators[]
+============================================================
+
+Now apply the same rule to:
+
+	*creators[]
+
+Because [] binds tighter than *, this is mentally:
+
+	*(creators[])
+
+Meaning:
+
+	creators[] happens first
+
+So:
+
+	creators is an array
+
+Then:
+
+	*
+
+means:
+
+	the elements inside this array are pointers
+
+
+So:
+
+	*creators[]
+
+means:
+
+	creators is an array of pointers
+
+
+It does NOT mean:
+
+	creators itself is a pointer
+
+
+This is the most important sentence:
+
+	creators is the array.
+	creators[i] is one element.
+	That one element is a pointer.
+
+
+In your case:
+
+	creators[0] is a pointer to createShrubbery
+	creators[1] is a pointer to createRobotomy
+	creators[2] is a pointer to createPardon
+
+============================================================
+8. ONE FUNCTION POINTER FIRST
+============================================================
+
+Before array of function pointers, understand one function pointer.
+
+Suppose you have:
+
+	AForm *createRobotomy(const std::string &target);
+
+This function:
+
+	takes const std::string &
+	returns AForm *
+
+
+A pointer to this function is:
+
+	AForm *(*creator)(const std::string &);
+
+Read it from the name:
+
+	creator
+
+Look left:
+
+	*creator
+
+So:
+
+	creator is a pointer
+
+Look right:
+
+	(*creator)(const std::string &)
+
+So:
+
+	creator is a pointer to a function
+	that takes const std::string &
+
+Look left:
+
+	AForm *
+
+So:
+
+	that function returns AForm *
+
+
+Full meaning:
+
+	creator is a pointer to a function
+	that takes const std::string &
+	and returns AForm *
+
+
+Example:
+
+	AForm *(*creator)(const std::string &) = createRobotomy;
+
+Then you can call:
+
+	creator("Bender");
+
+This means:
+
+	createRobotomy("Bender");
+
+
+You can also write:
+
+	(*creator)("Bender");
+
+This is more explicit:
+
+	dereference the function pointer,
+	then call the function
+
+But C++ allows the shorter version:
+
+	creator("Bender");
+
+
+============================================================
+9. NOW ARRAY OF FUNCTION POINTERS
+============================================================
+
+One function pointer:
+
+	AForm *(*creator)(const std::string &);
+
+Array of function pointers:
+
+	AForm *(*creators[])(const std::string &);
+
+The only difference is:
+
+	creator
+
+became:
+
+	creators[]
+
+
+So:
+
+	AForm *(*creator)(const std::string &)
+
+means:
+
+	one pointer to one function
+
+
+And:
+
+	AForm *(*creators[])(const std::string &)
+
+means:
+
+	an array of pointers to functions
+
+
+Visual:
+
+	creator
+	+----------------+
+	| createRobotomy |
+	+----------------+
+
+
+	creators
+	+-----------------+----------------+--------------+
+	| createShrubbery | createRobotomy | createPardon |
+	+-----------------+----------------+--------------+
+
+
+============================================================
+10. BREAKING DOWN THE FULL TYPE
+============================================================
+
+Full declaration:
+
+	AForm *(*creators[])(const std::string &t)
+
+Split it:
+
+	AForm *        (*creators[])        (const std::string &t)
+	^^^^^^         ^^^^^^^^^^^^^        ^^^^^^^^^^^^^^^^^^^^^
+	return type    array of pointers    parameter list
+
+
+Part 1:
+
+	AForm *
+
+This is the return type of the creator functions.
+
+It means:
+
+	each creator function returns AForm *
+
+
+Part 2:
+
+	(*creators[])
+
+This says:
+
+	creators is an array,
+	and each element is a pointer
+
+
+Part 3:
+
+	(const std::string &t)
+
+This says:
+
+	each pointed-to function takes const std::string &
+
+
+Full sentence:
+
+	creators is an array of pointers to functions
+	that take const std::string &
+	and return AForm *
+
+
+============================================================
+11. TWO STARS, TWO DIFFERENT MEANINGS
+============================================================
+
+Look:
+
+	AForm *(*creators[])(const std::string &)
+	      ^
+	      first star
+
+	AForm *(*creators[])(const std::string &)
+	        ^
+	        second star
+
+
+First star:
+
+	AForm *
+
+means:
+
+	the function returns a pointer to AForm
+
+
+Second star:
+
+	(*creators[])
+
+means:
+
+	creators stores pointers to functions
+
+
+So:
+
+	AForm *(*creators[])(const std::string &)
+
+has two pointer ideas:
+
+	1. The function returns AForm *
+	2. The array stores function pointers
+
+
+These are different.
+
+============================================================
+17. READ THIS DECLARATION AS A SENTENCE
+============================================================
+
+Declaration:
+
+	AForm *(*creators[])(const std::string &)
+
+Sentence:
+
+	creators is an array
+	of pointers
+	to functions
+	that take const std::string &
+	and return AForm *
+
+============================================================
+21. THE MOST USEFUL MENTAL MODEL
+============================================================
+
+Do not think:
+
+	What the hell is AForm *(*creators[])(...)?
+
+Think:
+
+	I need a table.
+
+The table is:
+
+	form name                 creator function
+	-------------------------------------------------
+	shrubbery creation        createShrubbery
+	robotomy request          createRobotomy
+	presidential pardon       createPardon
+
+
+In code, the table is split into two arrays:
+
+	forms[] stores the names
+	creators[] stores the matching functions
+
+
+Then:
+
+	forms[i] matches creators[i]
+
+
+So:
+
+	if formName == forms[i]
+		call creators[i]
+
+
+That is the whole idea.
+
+
+============================================================
+22. FINAL SUMMARY OF THE HARD PART
+============================================================
+
+Hard part:
+
+	AForm *(*creators[])(const std::string &)
+
+
+Read it as:
+
+	creators[]                 creators is an array
+
+	*creators[]                array elements are pointers
+
+	(*creators[])(...)         array elements are pointers to functions
+
+	AForm *(*creators[])(...)  those functions return AForm *
+
+
+Full meaning:
+
+	creators is an array of pointers to functions.
+	Each function takes const std::string &.
+	Each function returns AForm *.
+
+
+Your specific mental question:
+
+	*(creators[])
+
+means:
+
+	creators[] happens first because [] has higher priority than *.
+	So creators is an array.
+	Then * says the selected array element is a pointer.
+
+
+Real expression version:
+
+	creators[i]
+
+means:
+
+	get one element from the array
+
+
+Since that element is a function pointer:
+
+	creators[i](formTarget)
+
+means:
+
+	call that function
+
+
+Explicit version:
+
+	(*creators[i])(formTarget)
+
+means the same thing.

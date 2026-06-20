@@ -20,6 +20,11 @@ static AForm *createPardon(const std::string &t)
 	return new PresidentialPardonForm(t);
 }
 
+/*
+	AForm *        (*creators[])        (const std::string &t)
+	^^^^^^         ^^^^^^^^^^^^^        ^^^^^^^^^^^^^^^^^^^^^
+	return type    array of pointers    parameter list
+*/
 AForm *Intern::makeForm(const std::string &formName, const std::string &formTarget) const
 {
 	std::string forms[] =
@@ -31,7 +36,7 @@ AForm *Intern::makeForm(const std::string &formName, const std::string &formTarg
 
 	AForm *(*creators[])(const std::string &t) = 
 	{
-		createShrubbery, // just the name = pointer to the function
+		createShrubbery, // when you use a function name without calling it, it behave like a pointer to that function(he address of the function)
 		createRobotomy,
 		createPardon
 	};
