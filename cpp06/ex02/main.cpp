@@ -7,5 +7,6 @@ int main(void)
 
 	identify(ptr);
 	identify(ref);
+	delete ptr;
 	return 0;
 }

@@ -9,7 +9,7 @@ int main(int ac, char **av)
         return 1;
     }
 	ScalarConverter::convert(av[1]);
-	
+
 	/*
 	std::cout << "char min:   " << std::numeric_limits<char>::min() << std::endl;
     std::cout << "char max:   " << std::numeric_limits<char>::max() << std::endl;
@@ -19,7 +19,7 @@ int main(int ac, char **av)
     std::cout << "float max:  " <<  std::numeric_limits<float>::max() << std::endl;
 	std::cout << "double min: " <<  std::numeric_limits<double>::min() << std::endl;
     std::cout << "double max: " <<  std::numeric_limits<double>::max() << std::endl;
-	
+
 	double nanValue = std::numeric_limits<double>::quiet_NaN();
     double infValue = std::numeric_limits<double>::infinity();
     double negInfValue = -std::numeric_limits<double>::infinity();

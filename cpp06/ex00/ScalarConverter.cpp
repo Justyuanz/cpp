@@ -8,7 +8,8 @@
 
 static inline bool isCharLiteral(const std::string &input)
 {
-	return input.length() == 3 && input[0] == '\'' && input[2] == '\'';
+	return input.length() == 1
+		&& !std::isdigit(static_cast<unsigned char>(input[0]));
 }
 
 static bool isFloatLiteral(const std::string &input)
@@ -68,8 +69,7 @@ static double getPseudoValue(const std::string &input)
 static void displayChar(double value)
 {
 	std::cout << "char: ";
-    if (std::isnan(value) || std::isinf(value)
-		|| value < std::numeric_limits<char>::min()
+	if (std::isnan(value) || std::isinf(value) || value < std::numeric_limits<char>::min()
     	|| value > std::numeric_limits<char>::max())
         std::cout << "impossible\n";
 	else if (!std::isprint(static_cast<unsigned char>(static_cast<char>(value))))
@@ -81,12 +81,11 @@ static void displayChar(double value)
 static void displayInt(double value)
 {
 	std::cout << "int: ";
-    if (std::isnan(value) || std::isinf(value)
-		|| value < std::numeric_limits<int>::min()
+	if (std::isnan(value) || std::isinf(value) || value < std::numeric_limits<int>::min()
 		|| value > std::numeric_limits<int>::max())
-        std::cout << "impossible\n";
+		std::cout << "impossible\n";
 	else
-        std::cout << static_cast<int>(value) << std::endl;
+		std::cout << static_cast<int>(value) << std::endl;
 }
 
 static void displayFloat(double value)
@@ -138,7 +137,7 @@ void ScalarConverter::convert(const std::string &input)
 	if (isPseudoFloat(input) || isPseudoDouble(input))
 		value = getPseudoValue(input);
 	else if (isCharLiteral(input))
-		value = static_cast<double>(input[1]);
+		value = static_cast<double>(input[0]);
 	else if (isFloatLiteral(input))
 		value = std::strtod(input.substr(0, input.length() - 1).c_str(), NULL);
 	else if (isDoubleLiteral(input))
@@ -156,4 +155,3 @@ void ScalarConverter::convert(const std::string &input)
 	displayFloat(value);
 	displayDouble(value);
 }
-
