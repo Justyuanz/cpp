@@ -1,14 +1,9 @@
-#include <cstdlib>
-#include <ctime>
 #include <iostream>
+#include <string>
 #include "Array.hpp"
-
-#define MAX_VAL 750
 
 int	main(void)
 {
-	std::srand(std::time(NULL));
-
 	std::cout << "default constructor" << std::endl;
 	Array<int> empty;
 	std::cout << "empty size: " << empty.size() << std::endl;
@@ -25,15 +20,15 @@ int	main(void)
 
 	std::cout << std::endl;
 	std::cout << "sized constructor" << std::endl;
-	Array<int> numbers(MAX_VAL);
+	Array<int> numbers(5);
 	std::cout << "numbers size: " << numbers.size() << std::endl;
-
 	for (unsigned int i = 0; i < numbers.size(); i++)
-		numbers[i] = std::rand();
+		numbers[i] = i * 10;
 
-	int *mirror = new int[MAX_VAL];
-	for (unsigned int i = 0; i < MAX_VAL; i++)
-		mirror[i] = numbers[i];
+	std::cout << "numbers values: ";
+	for (unsigned int i = 0; i < numbers.size(); i++)
+		std::cout << numbers[i] << " ";
+	std::cout << std::endl;
 
 	std::cout << std::endl;
 	std::cout << "copy constructor" << std::endl;
@@ -41,9 +36,9 @@ int	main(void)
 	std::cout << "copy size: " << copy.size() << std::endl;
 
 	bool same = true;
-	for (unsigned int i = 0; i < MAX_VAL; i++)
+	for (unsigned int i = 0; i < numbers.size(); i++)
 	{
-		if (copy[i] != mirror[i])
+		if (copy[i] != numbers[i])
 			same = false;
 	}
 	if (same)
@@ -94,14 +89,31 @@ int	main(void)
 
 	try
 	{
-		numbers[MAX_VAL] = 0;
-		std::cout << "numbers[MAX_VAL] did not throw" << std::endl;
+		numbers[numbers.size()] = 0;
+		std::cout << "numbers[size] did not throw" << std::endl;
 	}
 	catch (const std::exception &)
 	{
-		std::cout << "numbers[MAX_VAL] threw an exception" << std::endl;
+		std::cout << "numbers[size] threw an exception" << std::endl;
 	}
 
-	delete[] mirror;
+	std::cout << std::endl;
+	std::cout << "string array" << std::endl;
+	Array<std::string> words(3);
+	words[0] = "hello";
+	words[1] = "hi";
+	words[2] = "world";
+
+	std::cout << "words values: ";
+	for (unsigned int i = 0; i < words.size(); i++)
+		std::cout << words[i] << " ";
+	std::cout << std::endl;
+
+	Array<std::string> wordsCopy(words);
+	words[0] = "changed";
+	if (wordsCopy[0] != words[0])
+		std::cout << "string copy is independent" << std::endl;
+	else
+		std::cout << "string copy is not independent" << std::endl;
 	return 0;
 }

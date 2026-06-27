@@ -40,3 +40,4 @@ int	main(void)
 	const bool constBool[3] = {true, false, true};
 	::iter(constBool, std::size(constBool), print<const bool>);
 }
+

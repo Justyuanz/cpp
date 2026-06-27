@@ -16,7 +16,7 @@ Array<T>::Array(unsigned int size):_arr(nullptr), _size(size)
 	// char  → '\0'
 	// class → default constructor called*/
 	if (size > 0)
-		_arr = new T[size];
+		_arr = new T[size]();
 }
 
 template <typename T>
@@ -59,7 +59,17 @@ Array<T>& Array<T>::operator=(const Array &other)
 }
 
 template <typename T>
-T& Array<T>::operator[](int index) const
+T& Array<T>::operator[](int index)
+{
+    if (index < 0 || static_cast<unsigned int>(index) >= _size)
+	{
+        throw std::exception();
+	}
+	return _arr[index];
+}
+
+template <typename T>
+const T& Array<T>::operator[](int index) const
 {
     if (index < 0 || static_cast<unsigned int>(index) >= _size)
 	{

@@ -1,29 +1,17 @@
 #pragma once
 
 #include<cstdlib>
-#include<iostream>
-#include <type_traits>
 
 template<typename T>
-void increase(T &x)
-{
-	x++;
-	std::cout << "increase: " << x << std::endl;
-}
+void increase(T &x);
+
 template<typename T>
-void print(T &x)
-{
-	if (std::is_const_v<T>)
-		std::cout << "const: " << x << std::endl;
-	else
-		std::cout << x << std::endl;
-}
+void print(const T &x);
 
 template<typename T, typename F>
-void iter(T *array, const size_t length, F func)
-{
-	for (size_t i = 0; i < length; i++)
-	{
-		func(array[i]);
-	}
-}
+void iter(T *array, size_t length, F func);
+
+template<typename T, typename F>
+void iter(const T *array, size_t length, F func);
+
+#include "iter.tpp"

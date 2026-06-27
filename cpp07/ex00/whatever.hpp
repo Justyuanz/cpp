@@ -1,26 +1,12 @@
 #pragma once
 
 template <typename T>
-void swap(T &a, T &b)
-{
-	T	temp;
-	temp = a;
-	a = b;
-	b = temp;
-}
+void swap(T &a, T &b);
 
 template <typename T>
-T min(T a, T b)
-{
-	if (a < b)
-		return a;
-	return b;
-}
+const T& min(const T& a, const T& b);
 
 template <typename T>
-T max(T a, T b)
-{
-	if (a > b)
-		return a;
-	return b;
-}
+const T& max(const T& a, const T& b);
+
+#include "whatever.tpp"
