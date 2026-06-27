@@ -54,5 +54,5 @@ void identify(Base& p)
 	catch(const std::bad_cast& e)
 	{
 	}
-	
+
 }
