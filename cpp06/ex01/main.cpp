@@ -29,5 +29,9 @@ int main(void)
 	else
 		std::cout << "ERROR: originalPtr != restoredPtr" << std::endl;
 
+	std::cout << "age: " << restoredPtr->age << std::endl
+			<< "name: " << restoredPtr->name << std::endl
+			<< "score: " << restoredPtr->score << std::endl;
+
 	return (0);
 }
