@@ -4,7 +4,7 @@ CPP = c++
 CPPFLAGS = -g -Wall -Wextra -Werror -std=c++20 -MMD -MP
 
 SRCS = main.cpp
-HEADERS = Array.hpp Array.tpp
+HEADERS = Array.hpp
 OBJDIR = obj
 OBJS = $(SRCS:%.cpp=$(OBJDIR)/%.o)
 DEPS = $(OBJS:.o=.d)
