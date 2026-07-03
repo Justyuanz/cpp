@@ -124,6 +124,22 @@ Beginner default choice:
 
     When unsure, start with std::vector.
 
+std::vector<int> vec(N);
+means:
+	Create a vector and put N ints inside it immediately.
+
+[0] [0] [0] [0] [0]
+size = 5
+capacity = 5
+
+But you wanted an empty vector with room for 5 numbers. That is:
+std::vector<int> vec;
+vec.reserve(_capacity);
+Now it is like:
+[ empty room for 5 ints ]
+So:
+size = 0
+capacity = 5
 
 4. ITERATORS
 ------------

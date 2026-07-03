@@ -1,10 +1,12 @@
 # pragma once
 
 #include <cstddef>
+#include <vector>
 class Span
 {
 private:
     unsigned int    _capacity;
+    std::vector<int> _numbers;
 
 public:
     Span() = delete;
@@ -17,5 +19,7 @@ public:
     void addNumber(int n);
     //void addMultipleNumbers();
     //unsigned int    shortestSpan();
-    //unsigned int    longestSpan();
+    unsigned int    longestSpan();
+
+	void printNumbers();
 };
