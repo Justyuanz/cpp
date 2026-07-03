@@ -1,0 +1,823 @@
+C++ STL CONTAINERS STUDY NOTES
+==============================
+
+Goal
+----
+These notes are for learning the basic C++ STL containers you are likely to use in CPP08.
+Focus on understanding:
+
+1. What each container stores
+2. How to add/remove values
+3. How to loop through values
+4. Which container is good for which situation
+5. How this connects to easyfind
+
+
+1. WHAT IS A CONTAINER?
+-----------------------
+
+A container is an object that stores many values.
+
+In C, you may use an array:
+
+    int arr[3] = {10, 20, 30};
+
+In C++, STL containers give you ready-made ways to store many values:
+
+    std::vector<int> numbers;
+
+This means:
+
+    numbers is a container.
+    It stores int values.
+
+You can add values:
+
+    numbers.push_back(10);
+    numbers.push_back(20);
+    numbers.push_back(30);
+
+Now it contains:
+
+    [10, 20, 30]
+
+
+2. MAIN CONTAINERS TO LEARN FIRST
+---------------------------------
+
+For CPP08, focus on these first:
+
+    std::vector
+    std::list
+    std::deque
+    std::stack
+    std::map
+
+Do not try to learn every STL container at once.
+
+
+3. STD::VECTOR - DYNAMIC ARRAY
+------------------------------
+
+Header:
+
+    #include <vector>
+
+A vector is like an array that can grow.
+
+Example:
+
+    std::vector<int> v;
+
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
+
+Now:
+
+    v = [10, 20, 30]
+
+Common operations:
+
+    v.push_back(40);   // add to the back
+    v.pop_back();      // remove last element
+    v[0];              // access by index
+    v.front();         // first value
+    v.back();          // last value
+    v.size();          // number of elements
+    v.empty();         // true if empty
+
+Important:
+
+    pop_back() removes the last element, but it does not return it.
+
+Wrong:
+
+    int x = v.pop_back();
+
+Correct:
+
+    int x = v.back();
+    v.pop_back();
+
+Loop with index:
+
+    for (size_t i = 0; i < v.size(); i++)
+    {
+        std::cout << v[i] << std::endl;
+    }
+
+Loop with iterator:
+
+    for (std::vector<int>::iterator it = v.begin(); it != v.end(); ++it)
+    {
+        std::cout << *it << std::endl;
+    }
+
+When to use vector:
+
+    Use vector when you want a normal list of values.
+    It is good when you want index access.
+    It is good when you mostly add values at the back.
+
+Beginner default choice:
+
+    When unsure, start with std::vector.
+
+
+4. ITERATORS
+------------
+
+An iterator is a pointer-like object for containers.
+
+Example:
+
+    std::vector<int>::iterator it;
+
+If you have:
+
+    std::vector<int> v;
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
+
+Then:
+
+    it = v.begin();
+
+means:
+
+    it points to the first element.
+
+To get the value:
+
+    std::cout << *it << std::endl;
+
+Output:
+
+    10
+
+Important:
+
+    v.begin() points to the first element.
+    v.end() points to one position after the last element.
+
+v.end() is not the last element.
+It means "past the end".
+It is often used to mean "not found".
+
+Iterator loop pattern:
+
+    for (std::vector<int>::iterator it = v.begin(); it != v.end(); ++it)
+    {
+        std::cout << *it << std::endl;
+    }
+
+Meaning:
+
+    Start at the first element.
+    Keep going until one-after-last.
+    Print the value at current position.
+
+
+5. STD::LIST - LINKED LIST
+--------------------------
+
+Header:
+
+    #include <list>
+
+A list is a linked list.
+It is good at adding/removing at the front, back, or middle.
+
+Example:
+
+    std::list<int> l;
+
+    l.push_back(20);
+    l.push_back(30);
+    l.push_front(10);
+
+Now:
+
+    l = [10, 20, 30]
+
+Common operations:
+
+    l.push_back(40);   // add to back
+    l.push_front(5);   // add to front
+    l.pop_back();      // remove from back
+    l.pop_front();     // remove from front
+    l.front();         // first value
+    l.back();          // last value
+    l.size();          // number of elements
+    l.empty();         // true if empty
+
+Important difference from vector:
+
+    std::list does not support index access.
+
+Wrong:
+
+    l[0];
+
+Correct:
+
+    for (std::list<int>::iterator it = l.begin(); it != l.end(); ++it)
+    {
+        std::cout << *it << std::endl;
+    }
+
+When to use list:
+
+    Use list when you need many insertions/removals in the middle.
+    Do not use list if you need fast index access like container[5].
+
+
+6. STD::DEQUE - DOUBLE-ENDED QUEUE
+----------------------------------
+
+Header:
+
+    #include <deque>
+
+Pronunciation:
+
+    deque is pronounced like "deck".
+
+Meaning:
+
+    double-ended queue
+
+Main idea:
+
+    You can add/remove from the front.
+    You can add/remove from the back.
+
+Example:
+
+    std::deque<int> d;
+
+    d.push_back(20);
+    d.push_back(30);
+    d.push_front(10);
+
+Now:
+
+    d = [10, 20, 30]
+
+Common operations:
+
+    d.push_back(40);   // add to back
+    d.push_front(5);   // add to front
+    d.pop_back();      // remove from back
+    d.pop_front();     // remove from front
+    d[0];              // access by index
+    d.front();         // first value
+    d.back();          // last value
+    d.size();          // number of elements
+    d.empty();         // true if empty
+
+Deque compared with vector:
+
+    vector is good at adding to the back.
+    deque is good at adding to both front and back.
+
+Deque compared with list:
+
+    list has no index access.
+    deque has index access.
+
+When to use deque:
+
+    Use deque when you need to push/pop from both front and back.
+
+
+7. STD::STACK - LAST IN, FIRST OUT
+----------------------------------
+
+Header:
+
+    #include <stack>
+
+A stack is last-in, first-out.
+Think of a pile of plates.
+
+Example:
+
+    std::stack<int> s;
+
+    s.push(10);
+    s.push(20);
+    s.push(30);
+
+The top is 30.
+
+Common operations:
+
+    s.push(40);    // add to top
+    s.top();       // look at top value
+    s.pop();       // remove top value
+    s.empty();     // true if empty
+    s.size();      // number of elements
+
+Example:
+
+    std::stack<int> s;
+
+    s.push(10);
+    s.push(20);
+    s.push(30);
+
+    std::cout << s.top() << std::endl; // 30
+
+    s.pop();
+
+    std::cout << s.top() << std::endl; // 20
+
+Important:
+
+    pop() removes the top element, but it does not return it.
+
+Wrong:
+
+    int x = s.pop();
+
+Correct:
+
+    int x = s.top();
+    s.pop();
+
+Very important:
+
+    std::stack does not have begin().
+    std::stack does not have end().
+    std::stack does not support iterator loops.
+
+Wrong:
+
+    s.begin();
+    s.end();
+
+When to use stack:
+
+    Use stack when you only care about the latest/top value.
+    Example: undo history, parsing parentheses, depth-first search.
+
+For CPP08 easyfind:
+
+    easyfind does not work with std::stack because stack has no begin() and end().
+
+
+8. STD::MAP - KEY/VALUE STORAGE
+-------------------------------
+
+Header:
+
+    #include <map>
+
+A map stores key/value pairs.
+
+Example:
+
+    std::map<std::string, int> ages;
+
+    ages["Alice"] = 25;
+    ages["Bob"] = 30;
+
+Now:
+
+    Alice -> 25
+    Bob   -> 30
+
+Common operations:
+
+    ages["Alice"];       // access value by key
+    ages["Charlie"] = 40; // insert new key/value
+    ages.size();          // number of pairs
+    ages.empty();         // true if empty
+    ages.find("Bob");     // find key
+
+Loop through map:
+
+    for (std::map<std::string, int>::iterator it = ages.begin(); it != ages.end(); ++it)
+    {
+        std::cout << it->first << " is " << it->second << std::endl;
+    }
+
+In a map iterator:
+
+    it->first  = key
+    it->second = value
+
+Example:
+
+    Alice is 25
+    Bob is 30
+
+Important warning about map[key]:
+
+    If the key does not exist, map[key] creates it with a default value.
+
+Example:
+
+    std::cout << ages["David"] << std::endl;
+
+If "David" did not exist before, this creates:
+
+    David -> 0
+
+If you only want to check whether a key exists, use find():
+
+    std::map<std::string, int>::iterator it = ages.find("David");
+
+    if (it != ages.end())
+        std::cout << "Found: " << it->second << std::endl;
+    else
+        std::cout << "Not found" << std::endl;
+
+When to use map:
+
+    Use map when you need key/value storage.
+    Example: name -> age, command -> function, word -> count.
+
+For CPP08 easyfind:
+
+    std::map<std::string, int> is not a plain container of integers.
+    It stores pairs.
+    So easyfind is usually not meant for map in ex00.
+
+
+9. HOW TO CHOOSE A CONTAINER
+----------------------------
+
+Simple rule:
+
+    Need normal dynamic array/list of values?
+        Use std::vector.
+
+    Need fast add/remove at both front and back?
+        Use std::deque.
+
+    Need many insert/remove operations in the middle?
+        Use std::list.
+
+    Need only latest/top value?
+        Use std::stack.
+
+    Need key/value storage?
+        Use std::map.
+
+Table:
+
+    Container       Good for                           Index access?
+    ----------------------------------------------------------------
+    std::vector     normal dynamic array               yes
+    std::list       linked list, insert/remove middle   no
+    std::deque      front and back operations           yes
+    std::stack      top/latest value only               no
+    std::map        key/value pairs                     no normal index
+
+Beginner rule:
+
+    If unsure, use std::vector first.
+
+
+10. COMMON OPERATIONS CHEAT SHEET
+---------------------------------
+
+VECTOR:
+
+    std::vector<int> v;
+
+    v.push_back(10);
+    v.pop_back();
+    v[0];
+    v.front();
+    v.back();
+    v.size();
+    v.empty();
+
+LIST:
+
+    std::list<int> l;
+
+    l.push_back(10);
+    l.push_front(5);
+    l.pop_back();
+    l.pop_front();
+    l.front();
+    l.back();
+    l.size();
+    l.empty();
+
+DEQUE:
+
+    std::deque<int> d;
+
+    d.push_back(10);
+    d.push_front(5);
+    d.pop_back();
+    d.pop_front();
+    d[0];
+    d.front();
+    d.back();
+    d.size();
+    d.empty();
+
+STACK:
+
+    std::stack<int> s;
+
+    s.push(10);
+    s.top();
+    s.pop();
+    s.size();
+    s.empty();
+
+MAP:
+
+    std::map<std::string, int> m;
+
+    m["apple"] = 3;
+    m["banana"] = 5;
+    m.find("apple");
+    m.size();
+    m.empty();
+
+
+11. ALGORITHMS
+--------------
+
+Header:
+
+    #include <algorithm>
+
+STL algorithms work on ranges.
+A range is usually:
+
+    container.begin(), container.end()
+
+Important algorithms:
+
+    std::find
+    std::sort
+    std::reverse
+
+STD::FIND:
+
+    std::find(v.begin(), v.end(), 20);
+
+Meaning:
+
+    Search from beginning to end for 20.
+
+Return:
+
+    If found: iterator pointing to the value.
+    If not found: container.end().
+
+Example:
+
+    std::vector<int>::iterator it;
+
+    it = std::find(v.begin(), v.end(), 20);
+
+    if (it != v.end())
+        std::cout << "Found: " << *it << std::endl;
+    else
+        std::cout << "Not found" << std::endl;
+
+STD::SORT:
+
+    std::sort(v.begin(), v.end());
+
+Works with:
+
+    std::vector
+    std::deque
+
+Does not work directly with std::list.
+For list, use:
+
+    l.sort();
+
+STD::REVERSE:
+
+    std::reverse(v.begin(), v.end());
+
+
+12. CPP08 EASYFIND CONNECTION
+-----------------------------
+
+Your easyfind function can be:
+
+    #ifndef EASYFIND_HPP
+    # define EASYFIND_HPP
+
+    # include <algorithm>
+
+    template <typename T>
+    typename T::iterator easyfind(T& container, int value)
+    {
+        return std::find(container.begin(), container.end(), value);
+    }
+
+    #endif
+
+Meaning:
+
+    T is the container type.
+    value is the integer to search for.
+    std::find searches from container.begin() to container.end().
+    If found, it returns an iterator to the value.
+    If not found, it returns container.end().
+
+Good containers for easyfind:
+
+    std::vector<int>
+    std::list<int>
+    std::deque<int>
+
+Not good for easyfind:
+
+    std::stack<int>
+        because stack has no begin() and end().
+
+    std::map<std::string, int>
+        because map stores pairs, not plain ints.
+
+Example usage:
+
+    std::vector<int> v;
+
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
+
+    std::vector<int>::iterator it = easyfind(v, 20);
+
+    if (it != v.end())
+        std::cout << "Found: " << *it << std::endl;
+    else
+        std::cout << "Not found" << std::endl;
+
+Why return container.end() instead of throwing?
+
+    std::find already returns container.end() when not found.
+    This is standard STL behavior.
+    It is cheaper and normal for search failure.
+    The caller checks if the returned iterator equals container.end().
+
+
+13. TYPENAME T::ITERATOR
+------------------------
+
+In easyfind, you may see:
+
+    typename T::iterator it;
+
+Breakdown:
+
+    T              = the container type
+    T::iterator    = the iterator type inside that container
+    typename       = tells C++ that T::iterator is a type
+    it             = variable name
+
+Example 1:
+
+    std::vector<int> v;
+    easyfind(v, 20);
+
+Then T is:
+
+    std::vector<int>
+
+So:
+
+    typename T::iterator
+
+becomes:
+
+    std::vector<int>::iterator
+
+Example 2:
+
+    std::list<int> l;
+    easyfind(l, 20);
+
+Then T is:
+
+    std::list<int>
+
+So:
+
+    typename T::iterator
+
+becomes:
+
+    std::list<int>::iterator
+
+Why not just write iterator?
+
+    Because iterator is not a global type.
+    Each container has its own iterator type.
+
+Why not just write T?
+
+    Because T is the whole container type.
+    If T is std::vector<int>, then T it; creates another vector.
+    But you want an iterator, not another container.
+
+Why typename?
+
+    Inside a template, C++ knows T is a type.
+    But it does not automatically know whether T::iterator is a type or something else.
+    typename tells the compiler:
+
+        T::iterator is a type.
+
+
+14. SMALL PRACTICE EXERCISES
+----------------------------
+
+Exercise 1: vector
+
+    Create a vector with 10, 20, 30.
+    Print all values.
+    Find 20 using easyfind.
+    Find 99 using easyfind.
+    Check if result is v.end().
+
+Exercise 2: list
+
+    Create a list with 5, 10, 15.
+    Print all values using an iterator loop.
+    Do not use l[0].
+
+Exercise 3: deque
+
+    Create a deque.
+    Use push_back and push_front.
+    Make it contain 5, 10, 20, 30.
+    Print all values.
+
+Exercise 4: stack
+
+    Push 10, 20, 30.
+    Print and remove values until empty.
+    Expected output:
+
+        30
+        20
+        10
+
+    This shows last-in, first-out.
+
+Exercise 5: map
+
+    Create a map:
+
+        apple  -> 3
+        banana -> 5
+        orange -> 2
+
+    Print all key/value pairs.
+    Find banana with m.find("banana").
+
+
+15. FINAL MENTAL MODEL
+----------------------
+
+Container:
+
+    Stores values.
+
+Iterator:
+
+    Position inside a container.
+
+Algorithm:
+
+    Does work on a range.
+
+Example:
+
+    std::vector<int> v;                // container
+    v.begin(), v.end();                // range
+    std::find(v.begin(), v.end(), 20); // algorithm
+
+Remember:
+
+    vector = normal dynamic array
+    list   = linked list, no index
+    deque  = vector-like, good at front and back
+    stack  = only top/latest value
+    map    = key/value pairs
+
+For CPP08 easyfind:
+
+    Use vector, list, and deque for tests.
+    Return container.end() if not found.
+    The caller checks if result == container.end().
+

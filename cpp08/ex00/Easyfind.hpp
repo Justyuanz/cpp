@@ -13,5 +13,5 @@ typename T::iterator ("Compiler, T::iterator is a type. ")
 template <typename T>
 typename T::iterator easyfind(T& container, int num)
 {
-	return std::find(container.begin(), container.end(), num);	
+	return std::find(container.begin(), container.end(), num);
 }

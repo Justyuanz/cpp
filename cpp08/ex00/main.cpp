@@ -12,7 +12,7 @@ void test_easyfind(T& container, int num)
 	if (it != container.end())
 		std::cout << "Found:" << *it << std::endl;
 	else
-		std::cout << "Not found." << std::endl; 
+		std::cout << "Not found." << std::endl;
 }
 
 int main(void)
@@ -22,12 +22,6 @@ int main(void)
 		std::vector<int> vec = {0, 1, 2, 3, 4};
 		test_easyfind(vec, 0);
 		test_easyfind(vec, 99);
-	}
-	{
-		std::cout << "--------------test list-------------" << std::endl;
-		std::list<int> list = {0, 1, 2, 3, 4};
-		test_easyfind(list, 0);
-		test_easyfind(list, 99);
 	}
 	{
 		std::cout << "--------------test list-------------" << std::endl;
