@@ -18,8 +18,8 @@ public:
 
     void addNumber(int n);
     //void addMultipleNumbers();
-    //unsigned int    shortestSpan();
-    unsigned int    longestSpan();
+    int    shortestSpan();
+    int    longestSpan();
 
 	void printNumbers();
 };
