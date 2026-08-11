@@ -1,5 +1,4 @@
 #include "Span.hpp"
-#include <climits>
 #include <cstddef>
 #include <stdexcept>
 #include <vector>
@@ -16,32 +15,31 @@ void Span::addNumber(int n)
     if (_numbers.size() >= _capacity)
         throw std::runtime_error("Reached capacity.");
     _numbers.push_back(n);
-	// std::cout <<"Cap: " << _numbers.capacity() << std::endl;
-	// std::cout << "Size: " << _numbers.size() << std::endl;
 }
 
-int Span::longestSpan()
+long long Span::longestSpan()
 {
     if (_numbers.size() < 2)
         throw std::runtime_error("fewer than 2 stored numbers");
 
-    int min = *std::min_element(_numbers.begin(), _numbers.end());
-    int max = *std::max_element(_numbers.begin(), _numbers.end());
+    long long min = *std::min_element(_numbers.begin(), _numbers.end());
+    long long max = *std::max_element(_numbers.begin(), _numbers.end());
     return max - min;
 }
 
-int Span::shortestSpan()
+long long Span::shortestSpan()
 {
 
     if (_numbers.size() < 2)
         throw std::runtime_error("fewer than 2 stored numbers");
 
-    std::sort(_numbers.begin(), _numbers.end());
-    int span;
-    int min_span = _numbers[1] - _numbers[0];
-    for (std::size_t i = 1; i < _numbers.size(); i++)
+    std::vector<int> copy = _numbers;
+    std::sort(copy.begin(), copy.end());
+    long long span;
+    long long min_span = static_cast<long long>(copy[1]) - static_cast<long long>(copy[0]);
+    for (std::size_t i = 1; i < copy.size(); i++)
     {
-        span = _numbers[i] - _numbers[i - 1];
+        span = static_cast<long long>(copy[i]) - static_cast<long long>(copy[i - 1]);
         if (span < min_span)
             min_span = span;
     }
