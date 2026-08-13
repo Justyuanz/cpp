@@ -22,7 +22,7 @@ int main()
 
     stack.push(20);
 
-    std::cout << "\n--- Iterator test ---" << std::endl;
+    std::cout << "--- Iterator test ---" << std::endl;
 
     MutantStack<int>::iterator it = stack.begin();
     MutantStack<int>::iterator end = stack.end();
@@ -34,7 +34,7 @@ int main()
     }
 
 
-    std::cout << "\n--- String test ---" << std::endl;
+    std::cout << "--- String test ---" << std::endl;
 
     MutantStack<std::string> words;
 
@@ -54,7 +54,7 @@ int main()
     }
 
 
-    std::cout << "\n--- List comparison test ---" << std::endl;
+    std::cout << "--- List comparison test ---" << std::endl;
 
     MutantStack<int> mutant;
     std::list<int> list;
@@ -85,14 +85,14 @@ int main()
         ++lit;
     }
 
-    std::cout << "\n--- Copy test ---" << std::endl;
+    std::cout << "--- Copy test ---" << std::endl;
 
     MutantStack<int> copy(stack);
 
     std::cout << "copy top: " << copy.top() << std::endl;
     std::cout << "copy size: " << copy.size() << std::endl;
 
-    std::cout << "\n--- Const iterator test ---" << std::endl;
+    std::cout << "--- Const iterator test ---" << std::endl;
 
     const MutantStack<int> constStack(stack);
 
@@ -106,7 +106,7 @@ int main()
     }
 
 
-    std::cout << "\n--- ++ and -- iterator test ---" << std::endl;
+    std::cout << "--- ++ and -- iterator test ---" << std::endl;
 
     MutantStack<int>::iterator test = stack.begin();
 
