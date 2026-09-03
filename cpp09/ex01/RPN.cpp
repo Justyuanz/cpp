@@ -9,6 +9,7 @@ bool RPN::isOperator(char c)
 
 int RPN::calculate(const std::string &input)
 {
+    // Read one space-separated token at a time.
     for (std::size_t i = 0; i < input.size(); i++)
     {
         char c = input[i];
@@ -23,6 +24,7 @@ int RPN::calculate(const std::string &input)
            _stack.push(c - '0');
         else if (isOperator(c))
         {
+            // Operators consume the two top values.
             if (_stack.size() < 2)
                 throw std::runtime_error("Error");
 

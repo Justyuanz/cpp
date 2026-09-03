@@ -58,6 +58,7 @@ void BitcoinExchange::processInput(const std::string& filename)
     std::string amount;
     getline(file, line);
 
+    // Validate and calculate every input record.
     while (getline(file, line))
     {
         std::size_t pipe = line.find('|');
@@ -121,6 +122,7 @@ void BitcoinExchange::processInput(const std::string& filename)
             continue;
         }
 
+        // Use the exact rate or the closest earlier date.
         std::map<std::string, double>::const_iterator it = _rates.lower_bound(date);
         if (date < _rates.begin()->first)
         {
