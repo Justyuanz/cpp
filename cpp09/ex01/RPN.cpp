@@ -1,6 +1,7 @@
 #include "RPN.hpp"
 #include <cctype>
 #include <limits>
+#include <stdexcept>
 
 bool RPN::isOperator(char c)
 {
