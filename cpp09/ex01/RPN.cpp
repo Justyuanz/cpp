@@ -1,5 +1,6 @@
 #include "RPN.hpp"
 #include <cctype>
+#include <limits>
 
 bool RPN::isOperator(char c)
 {
@@ -39,16 +40,34 @@ int RPN::calculate(const std::string &input)
             switch (c)
             {
                 case '+':
+                    // Check the result bounds before signed addition.
+                    if ((right > 0 && left > std::numeric_limits<int>::max() - right) ||
+                        (right < 0 && left < std::numeric_limits<int>::min() - right))
+                        throw std::runtime_error("Error");
                     result = left + right;
                     break;
                 case '-':
+                    // Check the result bounds before signed subtraction.
+                    if ((right < 0 && left > std::numeric_limits<int>::max() + right) ||
+                        (right > 0 && left < std::numeric_limits<int>::min() + right))
+                        throw std::runtime_error("Error");
                     result = left - right;
                     break;
                 case '*':
-                    result = left * right;
+                    {
+                        // Use a wider type so the range check is itself safe.
+                        long long product = static_cast<long long>(left) * right;
+                        if (product > std::numeric_limits<int>::max() ||
+                            product < std::numeric_limits<int>::min())
+                            throw std::runtime_error("Error");
+                        result = static_cast<int>(product);
+                    }
                     break;
                 case '/':
                     if (right == 0)
+                        throw std::runtime_error("Error");
+                    // This is the only signed-int division result out of range.
+                    if (left == std::numeric_limits<int>::min() && right == -1)
                         throw std::runtime_error("Error");
                     result = left / right;
                     break;
